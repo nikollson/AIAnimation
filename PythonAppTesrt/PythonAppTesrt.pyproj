@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>d051ee2e-e703-4f53-bb5a-c83d083fb972</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>PythonAppTesrt.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>PythonAppTesrt</Name>
+    <RootNamespace>PythonAppTesrt</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="MujocoCollision.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="PythonAppTesrt.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="xmls\" />
+    <Folder Include="xmls\fetch\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="xmls\claw.xml" />
+    <Content Include="xmls\door.xml" />
+    <Content Include="xmls\fetch\base_link_collision.stl" />
+    <Content Include="xmls\fetch\bellows_link_collision.stl" />
+    <Content Include="xmls\fetch\elbow_flex_link_collision.stl" />
+    <Content Include="xmls\fetch\estop_link.stl" />
+    <Content Include="xmls\fetch\forearm_roll_link_collision.stl" />
+    <Content Include="xmls\fetch\gripper_link.stl" />
+    <Content Include="xmls\fetch\head_pan_link_collision.stl" />
+    <Content Include="xmls\fetch\head_tilt_link_collision.stl" />
+    <Content Include="xmls\fetch\laser_link.stl" />
+    <Content Include="xmls\fetch\l_wheel_link_collision.stl" />
+    <Content Include="xmls\fetch\main.xml" />
+    <Content Include="xmls\fetch\r_wheel_link_collision.stl" />
+    <Content Include="xmls\fetch\shoulder_lift_link_collision.stl" />
+    <Content Include="xmls\fetch\shoulder_pan_link_collision.stl" />
+    <Content Include="xmls\fetch\torso_fixed_link.stl" />
+    <Content Include="xmls\fetch\torso_lift_link_collision.stl" />
+    <Content Include="xmls\fetch\upperarm_roll_link_collision.stl" />
+    <Content Include="xmls\fetch\wrist_flex_link_collision.stl" />
+    <Content Include="xmls\fetch\wrist_roll_link_collision.stl" />
+    <Content Include="xmls\humanoid.xml" />
+    <Content Include="xmls\juggler.xml" />
+    <Content Include="xmls\key.xml" />
+    <Content Include="xmls\shelf.xml" />
+    <Content Include="xmls\slider.xml" />
+    <Content Include="xmls\Tesrt.xml">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="xmls\tosser.xml" />
+  </ItemGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
+  </PropertyGroup>
+  <Import Condition="Exists($(PtvsTargetsFile))" Project="$(PtvsTargetsFile)" />
+  <Import Condition="!Exists($(PtvsTargetsFile))" Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>
