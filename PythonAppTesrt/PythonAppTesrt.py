@@ -117,7 +117,7 @@ gamma = 0.9
 
 # Use epsilon-greedy for exploration
 explorer = chainerrl.explorers.LinearDecayEpsilonGreedy(
-    start_epsilon=0.8, end_epsilon=0.02, decay_steps=50000, random_action_func=env.action_space.sample)
+    start_epsilon=0.5, end_epsilon=0.1, decay_steps=100000, random_action_func=env.action_space.sample)
 
 # DQN uses Experience Replay.
 # Specify a replay buffer and its capacity.
