@@ -22,6 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="MujocoChainerDQN.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MujocoCollision.py">
       <SubType>Code</SubType>
     </Compile>
