@@ -81,6 +81,7 @@ class MyEnv(gym.Env):
             self.sim.data.ctrl[i] = action[i] * 0.5
         
         self.sim.step()
+        self.sim.step()
         return self._get_state(),self._get_reward(),False,{}
 
     def _reset(self):
@@ -117,11 +118,11 @@ gamma = 0.9
 
 # Use epsilon-greedy for exploration
 explorer = chainerrl.explorers.LinearDecayEpsilonGreedy(
-    start_epsilon=0.5, end_epsilon=0.1, decay_steps=100000, random_action_func=env.action_space.sample)
+    start_epsilon=0.5, end_epsilon=0.15, decay_steps=1000000, random_action_func=env.action_space.sample)
 
 # DQN uses Experience Replay.
 # Specify a replay buffer and its capacity.
-replay_buffer = chainerrl.replay_buffer.ReplayBuffer(capacity=10 ** 6)
+replay_buffer = chainerrl.replay_buffer.ReplayBuffer(capacity=1)
 
 # Since observations from CartPole-v0 is numpy.float64 while
 # Chainer only accepts numpy.float32 by default, specify
@@ -134,10 +135,11 @@ agent = chainerrl.agents.DoubleDQN(
     update_interval=1,replay_start_size=500,
     target_update_interval=100, phi=phi)
 
-max_episode_len = 1200
+max_episode_len = 600
 i = 0
-for i in range(1000):
+while True:
     obs = env.reset()
+    i=i+1
     reward = 0
     done = False
     R = 0  # return (sum of rewards)
