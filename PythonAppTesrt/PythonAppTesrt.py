@@ -1,23 +1,20 @@
+"""
+Asynchronous Advantage Actor Critic (A3C) with continuous action space, Reinforcement Learning.
+The Pendulum example.
+View more on my tutorial page: https://morvanzhou.github.io/tutorials/
+Using:
+tensorflow r1.3
+gym 0.8.0
+"""
 
-
-# OpenGym CartPole-v0 with A3C on GPU
-# -----------------------------------
-#
-# A3C implementation with GPU optimizer threads.
-# 
-# Made as part of blog series Let's make an A3C, available at
-# https://jaromiru.com/2017/02/16/lets-make-an-a3c-theory/
-#
-# author: Jaromir Janisch, 2017
-
-import numpy as np
+import multiprocessing
+import threading
 import tensorflow as tf
-
-import gym, time, random, threading
-
-from keras.models import *
-from keras.layers import *
-from keras import backend as K
+import numpy as np
+import gym
+import os
+import shutil
+import matplotlib.pyplot as plt
 
 import os
 import random
@@ -25,366 +22,254 @@ from gym import spaces
 from mujoco_py import load_model_from_path, MjSim, MjViewer
 import MujocoCollision as mjcol
 
-
-#-- constants
-ENV = 'CartPole-v0'
-
-RUN_TIME = 600
-#THREADS = 8
-#OPTIMIZERS = 2
-THREADS = 1
-OPTIMIZERS = 1
-THREAD_DELAY = 0.001
-
-GAMMA = 0.99
-
-N_STEP_RETURN = 4
-GAMMA_N = GAMMA ** N_STEP_RETURN
-
-EPS_START = .4
-EPS_STOP  = .2
-EPS_STEPS = 750000
-
-MIN_BATCH = 512
-#LEARNING_RATE = 5e-3
-LEARNING_RATE = 0.1
-
-#LOSS_V = .5			# v loss coefficient
-#LOSS_ENTROPY = .01 	# entropy coefficient
-LOSS_V = 10000			# v loss coefficient
-LOSS_ENTROPY = 2000 	# entropy coefficient
-
-#-- gym env
-
 class MyEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
-    stepcount = 0
-    def __init__(self):
-        self.model = load_model_from_path("xmls/Tesrt.xml")
-        self.sim = MjSim(self.model)
-        self.viewer = None
-        self.sim_state = self.sim.get_state()
-        self.bodynames = [
-            'torso1', 'head', 'uwaist', 'lwaist', 'butt',
-            'right_thigh1', 'right_shin1', 'right_foot_cap1', 'right_foot_cap2', 'left_thigh1',
-            'left_shin1', 'left_foot_cap1', 'left_foot_cap2', 'right_uarm1', 'right_larm',
-            'right_hand', 'left_uarm1', 'left_larm', 'left_hand'
-        ]
-
-        ones_act = np.ones(len(self.sim.data.ctrl))
-        ones_obs = np.ones(self._get_state().shape[0])
-
-        self.action_space = spaces.Box(-ones_act, ones_act)
-        self.observation_space = spaces.Box(-ones_obs, ones_obs)
-
-    def _get_state(self):
-        torso = []
-        ret = []
-        for i in range(len(self.bodynames)):
-            vec = self.sim.data.get_geom_xpos(self.bodynames[i])
-            if i==0:
-                ret = vec
-                torso = vec
-            if i!=0:
-                ret = np.append(ret, vec-torso)
-        return ret
-    
-    def _get_reward(self):
-        return self.sim.data.get_geom_xpos('head')[2]
-
-    def _step(self, action):
-        if self.stepcount%20==0:
-            print(action)
-        for i in range(len(action)):
-            self.sim.data.ctrl[i] = action[i] * 1.2
-        self.stepcount += 2
-        self.sim.step()
-        self.sim.step()
-
-        isEnd = False
-        if(self.stepcount >= 1200):
-            isEnd = True
-        return self._get_state(),self._get_reward(),isEnd,{}
-
-    def _reset(self):
-        self.sim.set_state(self.sim_state)
-
-        for i in range(2):
-           self._step((np.random.rand(len(self.sim.data.ctrl))-0.5)*2);
-
-        self.stepcount = 0
-        return self._get_state()
-
-    def _render(self, mode = 'human', close = False):
-        if self.viewer is None:
-            self.viewer = MjViewer(self.sim)
-        self.viewer.render()
-
-#---------
-class Brain:
-	train_queue = [ [], [], [], [], [] ]	# s, a, r, s', s' terminal mask
-	lock_queue = threading.Lock()
-
+	metadata = {'render.modes': ['human']}
+	stepcount = 0
 	def __init__(self):
-		self.session = tf.Session()
-		K.set_session(self.session)
-		K.manual_variable_initialization(True)
+		self.model = load_model_from_path("xmls/Tesrt.xml")
+		self.sim = MjSim(self.model)
+		self.viewer = None
+		self.sim_state = self.sim.get_state()
+		self.bodynames = [
+			'torso1', 'head', 'uwaist', 'lwaist', 'butt',
+			'right_thigh1', 'right_shin1', 'right_foot_cap1', 'right_foot_cap2', 'left_thigh1',
+			'left_shin1', 'left_foot_cap1', 'left_foot_cap2', 'right_uarm1', 'right_larm',
+			'right_hand', 'left_uarm1', 'left_larm', 'left_hand'
+		]
 
-		self.model = self._build_model()
-		self.graph = self._build_graph(self.model)
+		ones_act = np.ones(len(self.sim.data.ctrl))
+		ones_obs = np.ones(self._get_state().shape[0])
 
-		self.session.run(tf.global_variables_initializer())
-		self.default_graph = tf.get_default_graph()
+		self.action_space = spaces.Box(-ones_act, ones_act)
+		self.observation_space = spaces.Box(-ones_obs, ones_obs)
 
-		self.default_graph.finalize()	# avoid modifications
-
-	def _build_model(self):
-
-		l_input = Input( batch_shape=(None, NUM_STATE) )
-		l_dense = Dense(200, activation='linear')(l_input)
-		l_dense2 = Dense(100, activation='softmax')(l_dense)
-
-		out_actions = Dense(NUM_ACTIONS, activation='softmax')(l_dense2)
-		out_value   = Dense(1, activation='softmax')(l_dense2)
-
-		model = Model(inputs=[l_input], outputs=[out_actions, out_value])
-		model._make_predict_function()	# have to initialize before threading
-
-		return model
-
-	def _build_graph(self, model):
-		s_t = tf.placeholder(tf.float32, shape=(None, NUM_STATE))
-		a_t = tf.placeholder(tf.float32, shape=(None, NUM_ACTIONS))
-		r_t = tf.placeholder(tf.float32, shape=(None, 1)) # not immediate, but discounted n step reward
-		
-		p, v = model(s_t)
-
-		log_prob = tf.log( tf.reduce_sum(p * a_t, axis=1, keep_dims=True) + 1e-10)
-		advantage = r_t - v
-
-		loss_policy = - log_prob * tf.stop_gradient(advantage)									# maximize policy
-		loss_value  = LOSS_V * tf.square(advantage)												# minimize value error
-		entropy = LOSS_ENTROPY * tf.reduce_sum(p * tf.log(p + 1e-10), axis=1, keep_dims=True)	# maximize entropy (regularization)
-
-		loss_total = tf.reduce_mean(loss_policy + loss_value + entropy)
-
-		optimizer = tf.train.RMSPropOptimizer(LEARNING_RATE, decay=.99)
-		minimize = optimizer.minimize(loss_total)
-
-		return s_t, a_t, r_t, minimize
-
-	def optimize(self):
-		if len(self.train_queue[0]) < MIN_BATCH:
-			time.sleep(0)	# yield
-			return
-
-		with self.lock_queue:
-			if len(self.train_queue[0]) < MIN_BATCH:	# more thread could have passed without lock
-				return 									# we can't yield inside lock
-
-			s, a, r, s_, s_mask = self.train_queue
-			self.train_queue = [ [], [], [], [], [] ]
-
-		s = np.vstack(s)
-		a = np.vstack(a)
-		r = np.vstack(r)
-		s_ = np.vstack(s_)
-		s_mask = np.vstack(s_mask)
-
-		if len(s) > 5*MIN_BATCH: print("Optimizer alert! Minimizing batch of %d" % len(s))
-
-		v = self.predict_v(s_)
-		r = r + GAMMA_N * v * s_mask	# set v to 0 where s_ is terminal state
-		
-		s_t, a_t, r_t, minimize = self.graph
-		self.session.run(minimize, feed_dict={s_t: s, a_t: a, r_t: r})
-
-	def train_push(self, s, a, r, s_):
-		with self.lock_queue:
-			self.train_queue[0].append(s)
-			self.train_queue[1].append(a)
-			self.train_queue[2].append(r)
-
-			if s_ is None:
-				self.train_queue[3].append(NONE_STATE)
-				self.train_queue[4].append(0.)
-			else:	
-				self.train_queue[3].append(s_)
-				self.train_queue[4].append(1.)
-
-	def predict(self, s):
-		with self.default_graph.as_default():
-			p, v = self.model.predict(s)
-			return p, v
-
-	def predict_p(self, s):
-		with self.default_graph.as_default():
-			p, v = self.model.predict(s)		
-			return p
-
-	def predict_v(self, s):
-		with self.default_graph.as_default():
-			p, v = self.model.predict(s)		
-			return v
-
-#---------
-frames = 0
-class Agent:
-	def __init__(self, eps_start, eps_end, eps_steps):
-		self.eps_start = eps_start
-		self.eps_end   = eps_end
-		self.eps_steps = eps_steps
-
-		self.memory = []	# used for n_step return
-		self.R = 0.
-
-	def getEpsilon(self):
-		if(frames >= self.eps_steps):
-			return self.eps_end
-		else:
-			return self.eps_start + frames * (self.eps_end - self.eps_start) / self.eps_steps	# linearly interpolate
-
-	def act(self, s):
-		eps = self.getEpsilon()			
-		global frames; frames = frames + 1
-
-		if random.random() < eps:
-			#return random.randint(0, NUM_ACTIONS-1)
-			a= (np.random.rand(NUM_ACTIONS)-0.5)*0.5;
-			#print(a)
-			return a
-		else:
-			s = np.array([s])
-			p = brain.predict_p(s)[0]
-
-			## a = np.argmax(p)
-			#a = np.random.choice(NUM_ACTIONS, p=p)
-			a = p
-
-			return a
+	def _get_state(self):
+		torso = []
+		ret = []
+		for i in range(len(self.bodynames)):
+			vec = self.sim.data.get_geom_xpos(self.bodynames[i])
+			if i==0:
+				ret = vec
+				torso = vec
+			if i!=0:
+				ret = np.append(ret, vec-torso)
+		return ret
 	
-	def train(self, s, a, r, s_):
-		def get_sample(memory, n):
-			s, a, _, _  = memory[0]
-			_, _, _, s_ = memory[n-1]
+	def _get_reward(self):
+		return self.sim.data.get_geom_xpos('head')[2]
 
-			return s, a, self.R, s_
+	def _step(self, action):
+		#if self.stepcount%20==0:
+		#	print(action)
+		for i in range(len(action)):
+			self.sim.data.ctrl[i] = action[i] * 0.25
+		self.stepcount += 2
+		self.sim.step()
+		self.sim.step()
 
-		#a_cats = np.zeros(NUM_ACTIONS)	# turn action into one-hot representation
-		#a_cats[a] = 1 
-		a_cats = a;
+		isEnd = False
+		if(self.stepcount >= 900):
+			isEnd = True
+		return self._get_state(),self._get_reward(),isEnd,{}
 
-		self.memory.append( (s, a_cats, r, s_) )
+	def _reset(self):
+		self.sim.set_state(self.sim_state)
 
-		self.R = ( self.R + r * GAMMA_N ) / GAMMA
+		for i in range(2):
+		   self._step((np.random.rand(len(self.sim.data.ctrl))-0.5)*2);
 
-		if s_ is None:
-			while len(self.memory) > 0:
-				n = len(self.memory)
-				s, a, r, s_ = get_sample(self.memory, n)
-				brain.train_push(s, a, r, s_)
+		self.stepcount = 0
+		return self._get_state()
 
-				self.R = ( self.R - self.memory[0][2] ) / GAMMA
-				self.memory.pop(0)		
+	def _render(self, mode = 'human', close = False):
+		if self.viewer is None:
+			self.viewer = MjViewer(self.sim)
+		self.viewer.render()
 
-			self.R = 0
 
-		if len(self.memory) >= N_STEP_RETURN:
-			s, a, r, s_ = get_sample(self.memory, N_STEP_RETURN)
-			brain.train_push(s, a, r, s_)
+GAME = 'Pendulum-v0'
+OUTPUT_GRAPH = True
+LOG_DIR = './log'
+N_WORKERS = multiprocessing.cpu_count()
+MAX_EP_STEP = 5000
+MAX_GLOBAL_EP = 20000
+GLOBAL_NET_SCOPE = 'Global_Net'
+UPDATE_GLOBAL_ITER = 10
+GAMMA = 0.9
+ENTROPY_BETA = 0.01
+LR_A = 0.0001    # learning rate for actor
+LR_C = 0.001    # learning rate for critic
+GLOBAL_RUNNING_R = []
+GLOBAL_EP = 0
 
-			self.R = self.R - self.memory[0][2]
-			self.memory.pop(0)	
-	
-	# possible edge case - if an episode ends in <N steps, the computation is incorrect
-		
-#---------
-class Environment(threading.Thread):
-	stop_signal = False
+#env = gym.make(GAME)
+env = MyEnv()
 
-	def __init__(self, render=False, eps_start=EPS_START, eps_end=EPS_STOP, eps_steps=EPS_STEPS):
-		threading.Thread.__init__(self)
+N_S = env.observation_space.shape[0]
+N_A = env.action_space.shape[0]
+A_BOUND = [env.action_space.low, env.action_space.high]
 
-		self.render = render
-		#self.env = gym.make(ENV)
-		self.env = MyEnv();
-		self.agent = Agent(eps_start, eps_end, eps_steps)
 
-	def runEpisode(self):
-		s = self.env.reset()
+class ACNet(object):
+	def __init__(self, scope, globalAC=None):
 
-		R = 0
-		while True:         
-			time.sleep(THREAD_DELAY) # yield 
+		if scope == GLOBAL_NET_SCOPE:   # get global network
+			with tf.variable_scope(scope):
+				self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
+				self.a_params, self.c_params = self._build_net(scope)[-2:]
+		else:   # local net, calculate losses
+			with tf.variable_scope(scope):
+				self.s = tf.placeholder(tf.float32, [None, N_S], 'S')
+				self.a_his = tf.placeholder(tf.float32, [None, N_A], 'A')
+				self.v_target = tf.placeholder(tf.float32, [None, 1], 'Vtarget')
 
-			if self.render: self.env.render()
+				mu, sigma, self.v, self.a_params, self.c_params = self._build_net(scope)
 
-			a = self.agent.act(s)
-			s_, r, done, info = self.env.step(a)
+				td = tf.subtract(self.v_target, self.v, name='TD_error')
+				with tf.name_scope('c_loss'):
+					self.c_loss = tf.reduce_mean(tf.square(td))
 
-			if done: # terminal state
-				s_ = None
+				with tf.name_scope('wrap_a_out'):
+					mu, sigma = mu * A_BOUND[1], sigma + 1e-4
 
-			self.agent.train(s, a, r, s_)
+				normal_dist = tf.distributions.Normal(mu, sigma)
 
-			s = s_
-			R += r
+				with tf.name_scope('a_loss'):
+					log_prob = normal_dist.log_prob(self.a_his)
+					exp_v = log_prob * td
+					entropy = normal_dist.entropy()  # encourage exploration
+					self.exp_v = ENTROPY_BETA * entropy + exp_v
+					self.a_loss = tf.reduce_mean(-self.exp_v)
 
-			if done or self.stop_signal:
-				break
+				with tf.name_scope('choose_a'):  # use local params to choose action
+					self.A = tf.clip_by_value(tf.squeeze(normal_dist.sample(1), axis=0), A_BOUND[0], A_BOUND[1])
+				with tf.name_scope('local_grad'):
+					self.a_grads = tf.gradients(self.a_loss, self.a_params)
+					self.c_grads = tf.gradients(self.c_loss, self.c_params)
 
-		print("Total R:", R)
+			with tf.name_scope('sync'):
+				with tf.name_scope('pull'):
+					self.pull_a_params_op = [l_p.assign(g_p) for l_p, g_p in zip(self.a_params, globalAC.a_params)]
+					self.pull_c_params_op = [l_p.assign(g_p) for l_p, g_p in zip(self.c_params, globalAC.c_params)]
+				with tf.name_scope('push'):
+					self.update_a_op = OPT_A.apply_gradients(zip(self.a_grads, globalAC.a_params))
+					self.update_c_op = OPT_C.apply_gradients(zip(self.c_grads, globalAC.c_params))
 
-	def run(self):
-		while not self.stop_signal:
-			self.runEpisode()
+	def _build_net(self, scope):
+		w_init = tf.random_normal_initializer(0., .1)
+		with tf.variable_scope('actor'):
+			l_a = tf.layers.dense(self.s, 200, tf.nn.relu6, kernel_initializer=w_init, name='la')
+			mu = tf.layers.dense(l_a, N_A, tf.nn.tanh, kernel_initializer=w_init, name='mu')
+			sigma = tf.layers.dense(l_a, N_A, tf.nn.softplus, kernel_initializer=w_init, name='sigma')
+		with tf.variable_scope('critic'):
+			l_c = tf.layers.dense(self.s, 100, tf.nn.relu6, kernel_initializer=w_init, name='lc')
+			v = tf.layers.dense(l_c, 1, kernel_initializer=w_init, name='v')  # state value
+		a_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope + '/actor')
+		c_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=scope + '/critic')
+		return mu, sigma, v, a_params, c_params
 
-	def stop(self):
-		self.stop_signal = True
+	def update_global(self, feed_dict):  # run by a local
+		SESS.run([self.update_a_op, self.update_c_op], feed_dict)  # local grads applies to global net
 
-#---------
-class Optimizer(threading.Thread):
-	stop_signal = False
+	def pull_global(self):  # run by a local
+		SESS.run([self.pull_a_params_op, self.pull_c_params_op])
 
-	def __init__(self):
-		threading.Thread.__init__(self)
+	def choose_action(self, s):  # run by a local
+		s = s[np.newaxis, :]
+		return SESS.run(self.A, {self.s: s})[0]
 
-	def run(self):
-		while not self.stop_signal:
-			brain.optimize()
 
-	def stop(self):
-		self.stop_signal = True
+class Worker(object):
+	def __init__(self, name, globalAC):
+		self.env = MyEnv()
+		self.name = name
+		self.AC = ACNet(name, globalAC)
 
-#-- main
-env_test = Environment(render=True, eps_start=0., eps_end=0.)
-NUM_STATE = env_test.env.observation_space.shape[0]
-#NUM_ACTIONS = env_test.env.action_space.n
-NUM_ACTIONS = len(env_test.env.action_space.high);
-NONE_STATE = np.zeros(NUM_STATE)
+	def work(self):
+		global GLOBAL_RUNNING_R, GLOBAL_EP
+		total_step = 1
+		buffer_s, buffer_a, buffer_r = [], [], []
+		while not COORD.should_stop() and GLOBAL_EP < MAX_GLOBAL_EP:
+			s = self.env.reset()
+			ep_r = 0
+			for ep_t in range(MAX_EP_STEP):
+				if self.name == 'W_0':
+					self.env.render()
+				a = self.AC.choose_action(s)
+				s_, r, done, info = self.env.step(a)
+				done = True if ep_t == MAX_EP_STEP - 1 or done else False
 
-brain = Brain()	# brain is global in A3C
+				ep_r += r
+				buffer_s.append(s)
+				buffer_a.append(a)
+				buffer_r.append((r+8)/8)    # normalize
 
-envs = [Environment() for i in range(THREADS)]
-opts = [Optimizer() for i in range(OPTIMIZERS)]
+				if total_step % UPDATE_GLOBAL_ITER == 0 or done:   # update global and assign to local net
+					if done:
+						v_s_ = 0   # terminal
+					else:
+						v_s_ = SESS.run(self.AC.v, {self.AC.s: s_[np.newaxis, :]})[0, 0]
+					buffer_v_target = []
+					for r in buffer_r[::-1]:    # reverse buffer r
+						v_s_ = r + GAMMA * v_s_
+						buffer_v_target.append(v_s_)
+					buffer_v_target.reverse()
 
-for o in opts:
-	o.start()
+					buffer_s, buffer_a, buffer_v_target = np.vstack(buffer_s), np.vstack(buffer_a), np.vstack(buffer_v_target)
+					feed_dict = {
+						self.AC.s: buffer_s,
+						self.AC.a_his: buffer_a,
+						self.AC.v_target: buffer_v_target,
+					}
+					self.AC.update_global(feed_dict)
+					buffer_s, buffer_a, buffer_r = [], [], []
+					self.AC.pull_global()
 
-for e in envs:
-	e.start()
+				s = s_
+				total_step += 1
+				if done:
+					if len(GLOBAL_RUNNING_R) == 0:  # record running episode reward
+						GLOBAL_RUNNING_R.append(ep_r)
+					else:
+						GLOBAL_RUNNING_R.append(0.9 * GLOBAL_RUNNING_R[-1] + 0.1 * ep_r)
+					print(
+						self.name,
+						"Ep:", GLOBAL_EP,
+						"| Ep_r: %i" % GLOBAL_RUNNING_R[-1],
+						  )
+					GLOBAL_EP += 1
+					break
 
-time.sleep(RUN_TIME)
+if __name__ == "__main__":
+	SESS = tf.Session()
 
-for e in envs:
-	e.stop()
-for e in envs:
-	e.join()
+	with tf.device("/cpu:0"):
+		OPT_A = tf.train.RMSPropOptimizer(LR_A, name='RMSPropA')
+		OPT_C = tf.train.RMSPropOptimizer(LR_C, name='RMSPropC')
+		GLOBAL_AC = ACNet(GLOBAL_NET_SCOPE)  # we only need its params
+		workers = []
+		# Create worker
+		for i in range(N_WORKERS):
+			i_name = 'W_%i' % i   # worker name
+			workers.append(Worker(i_name, GLOBAL_AC))
 
-for o in opts:
-	o.stop()
-for o in opts:
-	o.join()
+	COORD = tf.train.Coordinator()
+	SESS.run(tf.global_variables_initializer())
 
-print("Training finished")
-env_test.run()
+	if OUTPUT_GRAPH:
+		if os.path.exists(LOG_DIR):
+			shutil.rmtree(LOG_DIR)
+		tf.summary.FileWriter(LOG_DIR, SESS.graph)
+
+	worker_threads = []
+	for worker in workers:
+		job = lambda: worker.work()
+		t = threading.Thread(target=job)
+		t.start()
+		worker_threads.append(t)
+	COORD.join(worker_threads)
+
+	plt.plot(np.arange(len(GLOBAL_RUNNING_R)), GLOBAL_RUNNING_R)
+	plt.xlabel('step')
+	plt.ylabel('Total moving reward')
+	plt.show()

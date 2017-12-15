@@ -28,6 +28,9 @@
     <Compile Include="MujocoCollision.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="MujocoKerasA3C_Failed.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="PythonAppTesrt.py" />
   </ItemGroup>
   <ItemGroup>
