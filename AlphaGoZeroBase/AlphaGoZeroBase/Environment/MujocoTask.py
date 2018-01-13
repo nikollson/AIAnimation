@@ -2,16 +2,29 @@
 from Environment.MujocoModel import MujocoModel
 from mujoco_py import MjSim
 import numpy as np
+import json
 
-class Config:
-    ClearScore = -1.0
+class TaskConfig:
+    def __init__(self, limitTime, targetDistance):
+        self.ClearScore = -1.0
+        self.LimitTime = limitTime
+        self.TargetDistance = targetDistance
+
+    def GetList(self):
+        return list([self.LimitTime, self.TargetDistance])
+
+    def SetList(self, a):
+        self.LimitTime = a[0]
+        self.TargetDistance = a[1]
 
 class MujocoTask:
-    def __init__(self, model : MujocoModel, limitTime, targetDistance):
 
+
+
+    def __init__(self, model : MujocoModel, config:TaskConfig):
+
+        self.Config = config
         self.Model = model
-        self.LimitTime = limitTime
-
         self.Target = {}
 
         sim = MjSim(self.Model.MujocoModel)
@@ -20,7 +33,24 @@ class MujocoTask:
         joints = self.Model.JointList
 
         for joint in joints:
-            self.Target[joint.Site] = sim.data.get_site_xpos(joint.Site) + np.array([0,0,-targetDistance])
+            self.Target[joint.Site] = sim.data.get_site_xpos(joint.Site) + np.array([0,0,-config.TargetDistance])
+
+            
+    def Load(model:MujocoModel, fileName):
+        
+        with open(fileName, "rt") as f:
+            a = json.load(f)
+            config = TaskConfig(0,0)
+            config.SetList(a)
+
+        return MujocoTask(model, config)
+
+
+    def Save(self, filePath):
+
+        with open(filePath, "wt") as f:
+            json.dump(self.Config.GetList(), f)
+
 
     def GetScore(self, sim : MjSim):
 
@@ -47,12 +77,12 @@ class MujocoTask:
 
     def IsClear(self, sim : MjSim):
 
-        return self.GetScore(sim) > Config.ClearScore
+        return self.GetScore(sim) > self.Config.ClearScore
 
 
     def IsTerminate(self, sim : MjSim):
         
-        return sim.data.time >= self.LimitTime
+        return sim.data.time >= self.Config.LimitTime
 
 
 

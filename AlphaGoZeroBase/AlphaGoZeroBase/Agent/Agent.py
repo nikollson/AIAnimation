@@ -19,6 +19,7 @@ class AgentConfig:
         self.DiriclhetAlpha = 0.5
         self.PlicyTau = 1
 
+
 class Node:
 
     def __init__(self, parent, transitionP, actionNum):
@@ -141,14 +142,14 @@ class RootNode(Node):
 
 class Agent:
 
-    def __init__(self, config, network, model):
+    def __init__(self, config, network, model, task):
         
         assert isinstance(network, NetworkModel)
         assert isinstance(model, MujocoModel)
 
         self.Config = config
         self.Network = network
-        self.Env = MujocoEnv(model)
+        self.Env = MujocoEnv(model, task)
         self.StepTarget = []
         self.TrainData = list([])
 
@@ -204,7 +205,7 @@ class Agent:
 
             win = True if i < resultCount/2 else False
 
-            trainData = self.MakeTrainData(resultNodes[i], win)
+            trainData = self.MakeTrainData(resultNodes[i], resultNodes[i].Score)
 
             self.TrainData.extend(trainData)
 
@@ -243,12 +244,11 @@ class Agent:
         return value
 
 
-    def MakeTrainData(self, node, win):
+    def MakeTrainData(self, node, value):
 
         assert isinstance(node, Node)
 
         trainData = list([])
-        value = 1 if win else -1
 
         while True:
             

@@ -1,25 +1,31 @@
 
 
 from Worker.SelfPlay import SelfPlay
-from Worker.Optimize import Optimize
+from Worker.Optimizer import Optimizer
 from Worker.Viewer import Viewer
+from Worker.Initializer import Initializer
+from Worker.AllConfig import AllConfig
 
 
-viewer = Viewer()
+allConfig = AllConfig()
+
+initializer = Initializer(allConfig)
+optimizer = Optimizer(allConfig)
+worker = SelfPlay(allConfig)
+viewer = Viewer(allConfig)
+
+for step in range(10000):
+
+    print("--- Work " + str(step) + " ---")
+
+    initializer.Start()
+    worker.Start()
+
+    optimizer.Start()
+
 viewer.Start()
 
-
-
-for step in range(1):
-
-    print(step)
-
-    #worker = SelfPlay()
-    #worker.Start()
-
-    optimize = Optimize()
-    optimize.Start()
-
+    
 
 
 '''

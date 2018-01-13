@@ -1,7 +1,7 @@
 
 
 from Environment.MujocoModel import MujocoModel
-from Environment.MujocoTask import MujocoTask
+from Environment.MujocoTask import MujocoTask, TaskConfig
 from mujoco_py import MjSim, MjViewer
 import numpy as np
 
@@ -9,12 +9,12 @@ import numpy as np
 class MujocoEnv:
 
 
-    def __init__(self, model : MujocoModel):
+    def __init__(self, model : MujocoModel, task : MujocoTask):
         
         self.Model = model;
         self.Sim = MjSim(self.Model.MujocoModel)
 
-        self.Task = MujocoTask(self.Model, 0.7, 0.2)
+        self.Task = task
         self.Viewer = None
 
 
