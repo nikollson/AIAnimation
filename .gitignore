@@ -20,6 +20,9 @@
 *.suo
 /*.pyc
 /__pycache__/
+__pycache__
+*.pyc
+*.pyo
 
 Assets/Plugins.meta
 Assets/Plugins/x86.meta
