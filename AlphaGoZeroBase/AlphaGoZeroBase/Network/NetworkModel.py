@@ -29,11 +29,12 @@ class Config:
 
 class NetworkModel:
 
-    def __init__(self):
+    def __init__(self, useCPU = True):
         
         self.Model = None
 
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        if useCPU:
+            os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 
     def Save(self, configPath, weightPath):
