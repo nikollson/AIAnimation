@@ -18,7 +18,8 @@
 /*.booproj
 /.vs/
 *.suo
-*.pyc
+/*.pyc
+/__pycache__/
 
 Assets/Plugins.meta
 Assets/Plugins/x86.meta
