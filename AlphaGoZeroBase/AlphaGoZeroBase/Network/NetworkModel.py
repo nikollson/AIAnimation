@@ -33,6 +33,8 @@ class NetworkModel:
         
         self.Model = None
 
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
 
     def Save(self, configPath, weightPath):
 

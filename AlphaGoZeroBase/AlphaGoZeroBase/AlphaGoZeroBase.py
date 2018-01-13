@@ -10,12 +10,12 @@ viewer.Start()
 
 
 
-for step in range(1000):
+for step in range(1):
 
     print(step)
 
-    worker = SelfPlay()
-    worker.Start()
+    #worker = SelfPlay()
+    #worker.Start()
 
     optimize = Optimize()
     optimize.Start()

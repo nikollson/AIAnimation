@@ -21,7 +21,7 @@ class Viewer:
         net = Network()
         net.Load("AA.cnf", "AA.wgt")
 
-        agentConfig = AgentConfig(4, 8)
+        agentConfig = AgentConfig(10, 10)
         agent = Agent(agentConfig, net, model)
         
         state = env.GetSimState()
