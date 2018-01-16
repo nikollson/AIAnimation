@@ -15,22 +15,24 @@ allConfig = AllConfig()
 initializer = Initializer(allConfig)
 initializer.Start()
 
-
-worker = SelfPlay(allConfig)
 optimizer = Optimizer(allConfig)
-evaluater = Evaluater(allConfig)
 
-for step in range(1):
+
+for step in range(0):
 
     print("--- Work " + str(step) + " ---")
     
+    worker = SelfPlay(allConfig)
     worker.Start()
 
     optimizer.Start()
-    #evaluater.Start()
+
+    evaluater = Evaluater(allConfig)
+    evaluater.Start()
     
-#viewer = Viewer(allConfig)
-#viewer.Start()
+
+viewer = Viewer(allConfig)
+viewer.Start()
 
     
 

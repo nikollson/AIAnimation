@@ -15,7 +15,7 @@ from keras.optimizers import SGD
 
 class BuildConfig:
 
-    def __init__(self, observationShape, actionNum):
+    def __init__(self):
         self.Regularizer = l2(1e-4)
 
         self.CnnFilterSize = 3
@@ -25,9 +25,6 @@ class BuildConfig:
         self.MiddleCnnFilterNum = 20
 
         self.ValueNodeNum = 30
-
-        self.ObservationShape = observationShape
-        self.ActionNum = actionNum
 
 class CompileConfig:
 
@@ -47,28 +44,33 @@ class NetworkModel:
 
 
     def Save(self, configPath, weightPath):
+        
+        while os.access(configPath,os.R_OK)==False or os.access(weightPath,os.R_OK)==False:
+            sleep(0.001)
 
         with open(configPath, "wt") as f:
             config = self.Model.get_config()
             config["OptimizeCount"] = self.OptimizeCount
             json.dump(config, f)
+            self.Model.save_weights(weightPath)
            
-        self.Model.save_weights(weightPath)
 
 
     def Load(self, configPath, weightPath):
+
+        while os.access(configPath,os.W_OK)==False or os.access(weightPath,os.W_OK)==False:
+            sleep(0.001)
 
         with open(configPath, "rt") as f:
             config = json.load(f)
             self.OptimizeCount = config["OptimizeCount"]
             self.Model = Model.from_config(config)
+            self.Model.load_weights(weightPath)
 
-        self.Model.load_weights(weightPath)
 
+    def Build(self, config:BuildConfig, observationShape, actionN):
 
-    def Build(self, config:BuildConfig):
-
-        in_x = x = Input(config.ObservationShape)
+        in_x = x = Input(observationShape)
 
         # Input Layer
 
@@ -104,7 +106,7 @@ class NetworkModel:
         x = Activation("relu")(x)
         x = Flatten()(x)
 
-        policy_out = Dense(config.ActionNum, kernel_regularizer=config.Regularizer, 
+        policy_out = Dense(actionN, kernel_regularizer=config.Regularizer, 
                            activation="softmax", name="policy_out")(x)
 
 

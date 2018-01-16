@@ -20,14 +20,18 @@ class Optimizer:
         self.DataLength = 0
         self.LoadedData = set()
 
-        self.ObserveList = None
-        self.PolicyList = None
-        self.ValueList = None
+        self.ObserveList = -1
+        self.PolicyList = -1
+        self.ValueList = -1
 
 
     def Start(self):
         
         net = self.LoadNet()
+
+        if net.OptimizeCount >= self.Config.Worker.CheckPointLength:
+            print("Optimze Count "+str(net.OptimizeCount)+" >= CheckPointLength");
+            return
 
         self.FileLoad(net)
         self.Optimize(net)
@@ -57,6 +61,9 @@ class Optimizer:
             self.LoadedData.add(filePath)
 
             print("** File Loading ** " + filePath)
+
+            while os.access(filePath, os.R_OK)==False:
+                sleep(0.001)
 
             with open(filePath, "rt") as f:
 
@@ -100,7 +107,7 @@ class Optimizer:
         observeN1 = net.Model.input_shape[1]
         observeN2 = net.Model.input_shape[2]
 
-        if self.ObserveList == None:
+        if isinstance(self.ObserveList, np.ndarray)==False:
             self.ObserveList = np.ndarray((batchN, observeN1, observeN2))
             self.PolicyList = np.ndarray((batchN, inputN))
             self.ValueList = np.ndarray(batchN)

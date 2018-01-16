@@ -22,6 +22,10 @@ class Evaluater:
 
         net = self.LoadNet()
         
+        if net.OptimizeCount < self.Config.Worker.CheckPointLength:
+            print("Optimze Count "+str(net.OptimizeCount)+" < CheckPointLength");
+            return
+
         self.Evaluate(net)
 
 
@@ -35,9 +39,6 @@ class Evaluater:
 
     def Evaluate(self, next):
 
-        if next.OptimizeCount < self.Config.Worker.CheckPointLength:
-            return
-        
         best = NetworkModel()
         best.Load(self.Config.FilePath.BestModel.Config, self.Config.FilePath.BestModel.Weight)
 

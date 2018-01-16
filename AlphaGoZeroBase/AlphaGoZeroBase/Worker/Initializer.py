@@ -30,7 +30,7 @@ class Initializer:
             env = MujocoEnv(model, MujocoTask(model,self.Config.InitializeTask))
 
             net = NetworkModel()
-            net.Build(BuildConfig(env.GetObservationShape(), env.GetActionNum()))
+            net.Build(self.Config.Build, env.GetObservationShape(), env.GetActionNum())
             
             print("Make best model and minimal task.")
 
