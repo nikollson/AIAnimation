@@ -20,8 +20,8 @@ class NetworkConfig:
 class WorkerConfig:
     def __init__(self):
         self.TrainBatchSize = 2048
-        self.TrainDataMax = 5000
-        self.CheckPointLength = 2
+        self.TrainDataMax = 10000
+        self.CheckPointLength = 4
         self.EvaluateButtle = 2
         self.EvaluateWinRate = 0.49
 

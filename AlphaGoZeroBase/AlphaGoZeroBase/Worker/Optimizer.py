@@ -28,12 +28,12 @@ class Optimizer:
     def Start(self):
         
         net = self.LoadNet()
+        self.FileLoad(net)
 
         if net.OptimizeCount >= self.Config.Worker.CheckPointLength:
             print("Optimze Count "+str(net.OptimizeCount)+" >= CheckPointLength");
             return
 
-        self.FileLoad(net)
         self.Optimize(net)
 
     
@@ -63,7 +63,7 @@ class Optimizer:
             print("** File Loading ** " + filePath)
 
             while os.access(filePath, os.R_OK)==False:
-                sleep(0.001)
+                time.sleep(0.001)
 
             with open(filePath, "rt") as f:
 

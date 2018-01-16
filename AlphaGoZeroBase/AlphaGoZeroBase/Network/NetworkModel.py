@@ -1,6 +1,7 @@
 
 import json
 import os
+import time
 
 from keras.engine.topology import Input
 from keras.engine.training import Model
@@ -45,8 +46,9 @@ class NetworkModel:
 
     def Save(self, configPath, weightPath):
         
-        while os.access(configPath,os.R_OK)==False or os.access(weightPath,os.R_OK)==False:
-            sleep(0.001)
+        if os.access(configPath, os.F_OK):
+            while os.access(configPath,os.R_OK)==False or os.access(weightPath,os.R_OK)==False:
+                time.sleep(0.001)
 
         with open(configPath, "wt") as f:
             config = self.Model.get_config()
@@ -58,8 +60,9 @@ class NetworkModel:
 
     def Load(self, configPath, weightPath):
 
-        while os.access(configPath,os.W_OK)==False or os.access(weightPath,os.W_OK)==False:
-            sleep(0.001)
+        if os.access(configPath, os.F_OK):
+            while os.access(configPath,os.W_OK)==False or os.access(weightPath,os.W_OK)==False:
+                time.sleep(0.001)
 
         with open(configPath, "rt") as f:
             config = json.load(f)
