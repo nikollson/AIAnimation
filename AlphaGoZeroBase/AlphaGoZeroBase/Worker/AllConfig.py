@@ -19,18 +19,18 @@ class NetworkConfig:
 
 class WorkerConfig:
     def __init__(self):
-        self.TrainBatchSize = 20480
-        self.TrainDataMax = 100000
-        self.CheckPointLength = 5
-        self.EvaluateButtle = 7
-        self.EvaluateWinRate = 0.55
+        self.TrainBatchSize = 2048
+        self.TrainDataMax = 50000
+        self.CheckPointLength = 20
+        self.EvaluateButtle = 10
+        self.EvaluateWinRate = 0.49
 
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(5, 4)
-        self.ViewerAgent = AgentConfig(5, 4)
-        self.EvaluateAgent = AgentConfig(5,4)
+        self.SelfPlayAgent = AgentConfig(12, 1)
+        self.ViewerAgent = AgentConfig(12, 1)
+        self.EvaluateAgent = AgentConfig(12,1)
 
         self.InitializeTask = TaskConfig(1, 0.3)
 
@@ -48,8 +48,8 @@ class AllConfig:
     def GetBestLog(self):
         return ModelFileConfig(self.BestLogDir + "/BestLog" + self.GetDirStr())
 
-    def GetTrainPath(self):
-        return self.TrainDir + "/Train" + self.GetDirStr() + ".txt"
+    def GetTrainPath(self, addStr = ""):
+        return self.TrainDir + "/Train" + self.GetDirStr() + addStr + ".txt"
 
     def GetDirStr(self):
         return dt.now().strftime("%y%m%d%H%M%S")

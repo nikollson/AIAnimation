@@ -6,7 +6,7 @@ import json
 
 class TaskConfig:
     def __init__(self, limitTime, targetDistance):
-        self.ClearScore = -1.0
+        self.ClearScore = -0.1
         self.LimitTime = limitTime
         self.TargetDistance = targetDistance
 
@@ -62,7 +62,7 @@ class MujocoTask:
             obs = self.GetJointObservation(sim, joint)
             sum -= obs[3];
 
-        return sum
+        return sum / len(joints)
 
     def GetJointObservation(self, sim : MjSim, joint : MujocoModel.Joint):
 

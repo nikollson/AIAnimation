@@ -5,7 +5,7 @@ from Environment.MujocoModel import MujocoModel
 from Network.NetworkModel import NetworkModel
 
 import numpy as np
-
+import json
 
 
 class AgentConfig:
@@ -291,7 +291,10 @@ class Agent:
 
         return actionList
 
-
+    def SaveTrainData(self, path):
+        
+        with open(path, "wt") as f:
+            json.dump(self.TrainData, f)
 
 
 

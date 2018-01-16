@@ -5,25 +5,32 @@ from Worker.Optimizer import Optimizer
 from Worker.Viewer import Viewer
 from Worker.Initializer import Initializer
 from Worker.AllConfig import AllConfig
+from Worker.Evaluater import Evaluater
+
+import gc
 
 
 allConfig = AllConfig()
 
 initializer = Initializer(allConfig)
-optimizer = Optimizer(allConfig)
-worker = SelfPlay(allConfig)
-viewer = Viewer(allConfig)
+initializer.Start()
 
-for step in range(10000):
+
+worker = SelfPlay(allConfig)
+optimizer = Optimizer(allConfig)
+evaluater = Evaluater(allConfig)
+
+for step in range(1):
 
     print("--- Work " + str(step) + " ---")
-
-    initializer.Start()
+    
     worker.Start()
 
     optimizer.Start()
-
-viewer.Start()
+    #evaluater.Start()
+    
+#viewer = Viewer(allConfig)
+#viewer.Start()
 
     
 

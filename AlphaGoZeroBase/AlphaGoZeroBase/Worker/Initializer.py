@@ -1,5 +1,5 @@
 
-from Environment.MujocoModelSimple import MujocoModelSimple
+from Environment.MujocoModelHumanoid import MujocoModelHumanoid
 from Environment.MujocoEnv import MujocoEnv
 from Environment.MujocoTask import MujocoTask, TaskConfig
 from Network.NetworkModel import NetworkModel, BuildConfig
@@ -26,7 +26,7 @@ class Initializer:
 
         if hasBest == False:
 
-            model = MujocoModelSimple()
+            model = MujocoModelHumanoid()
             env = MujocoEnv(model, MujocoTask(model,self.Config.InitializeTask))
 
             net = NetworkModel()

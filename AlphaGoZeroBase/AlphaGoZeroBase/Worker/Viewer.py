@@ -1,6 +1,6 @@
 
 from Environment.MujocoEnv  import MujocoEnv as MujocoEnv
-from Environment.MujocoModelSimple  import MujocoModelSimple as Model
+from Environment.MujocoModelHumanoid  import MujocoModelHumanoid as Model
 from Environment.MujocoTask import MujocoTask, TaskConfig
 from Network.NetworkModel import NetworkModel as Network
 from Agent.Agent import Agent, AgentConfig
@@ -18,7 +18,7 @@ class Viewer:
     def Start(self):
         
         
-        filePath = self.Config.FilePath.NextGeneration
+        filePath = self.Config.FilePath.BestModel
 
         net = Network()
         net.Load(filePath.Config, filePath.Weight)

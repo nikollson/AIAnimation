@@ -1,6 +1,6 @@
 
 from Environment.MujocoEnv  import MujocoEnv as MujocoEnv
-from Environment.MujocoModelSimple  import MujocoModelSimple as Model
+from Environment.MujocoModelHumanoid  import MujocoModelHumanoid as Model
 from Environment.MujocoTask import MujocoTask, TaskConfig
 from Worker.AllConfig import AllConfig
 from Network.NetworkModel import NetworkModel as Network
@@ -32,5 +32,5 @@ class SelfPlay:
         state = env.GetSimState()
         bestAction = agent.SearchBestAction(state)
 
-        with open(self.Config.GetTrainPath(), "wt") as f:
-            json.dump(agent.TrainData, f)
+        agent.SaveTrainData(self.Config.GetTrainPath())
+
