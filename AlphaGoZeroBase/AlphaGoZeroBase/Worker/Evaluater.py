@@ -90,7 +90,7 @@ class Evaluater:
 
             nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
 
-            if nextScore >= bestScore:
+            if nextScore > bestScore:
                 nextWin += 1
 
             print("Buttle "+str(i)+" "+str(nextScore>=bestScore))

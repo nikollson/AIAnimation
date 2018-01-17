@@ -10,23 +10,25 @@ import json
 
 class AgentConfig:
 
-    def __init__(self, searchAmount, beamWidth, tau, tauZeroTime):
+    def __init__(self, searchAmount, beamWidth, tau):
 
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 1000
         self.CPuct = 5
         self.DiriclhetAlpha = 0.03
-        self.DiriclhetEpsilon = 0.3
+        self.DiriclhetEpsilon = 0.25
         self.PolicyTau = tau
-        self.PolicyTauZeroTime = tauZeroTime
+        self.PolicyTauMaxTime = 0.4
 
-    def GetTau(self, time):
+    def GetTau(self, time, maxTime):
 
-        if time>self.PolicyTauZeroTime:
-            return 0
+        if time <= self.PolicyTauMaxTime:
+            return self.PolicyTau
 
-        return self.PolicyTau
+        par = 1 - (time-self.PolicyTauMaxTime) / (maxTime-self.PolicyTauMaxTime)
+
+        return  par * self.PolicyTau
 
 
 class Node:
@@ -89,7 +91,7 @@ class Node:
             nList.append(nn)
             aList.append(i)
         
-        if tau == 0:
+        if tau <= 0.00001:
             maxi = np.argmax(nList)
             for i in range(len(nList)):
                 if i==maxi:
@@ -219,7 +221,7 @@ class Agent:
 
                 for child in searchRoot.Children:
                     if child.N >= self.Config.SearchAmount:
-                        tau = self.Config.GetTau(self.Env.GetTime())
+                        tau = self.Config.GetTau(self.Env.GetTime(), self.Env.Task.GetLimit())
                         self.StepTarget[i+1].append(child.PickTopChild(tau))
 
                 if len(self.StepTarget[i+1]) >= self.Config.BeamWidth:

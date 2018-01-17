@@ -90,6 +90,9 @@ class MujocoTask:
         
         return sim.data.time >= self.Config.LimitTime
 
+    def GetLimit(self):
+        return self.Config.LimitTime
+
 
 
 

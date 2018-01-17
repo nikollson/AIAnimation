@@ -65,7 +65,6 @@ class MujocoEnv:
             observe.extend(self.GetSensorValue(joints[i].JointPosition))
             observe.extend(self.GetSensorValue(joints[i].JointVelocity))
             observe.extend(self.GetSensorValue(joints[i].Accel))
-            observe.extend(self.GetSensorValue(joints[i].Force))
             observe.extend(self.GetSensorValue(joints[i].Gyro))
             observe.extend(self.GetSensorValue(joints[i].Torque))
             observe.extend(self.GetSensorValue(joints[i].Velocity))

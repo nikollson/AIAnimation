@@ -15,16 +15,16 @@
       <joint armature="0" axis="0 1 0" damping="0" limited="false" name="rooty" pos="0 0 1.25" stiffness="0" type="hinge"/>
       <geom friction="0.9" fromto="0 0 1.45 0 0 1.05" name="torso_geom" size="0.05" type="capsule"/>
       <body name="thigh" pos="0 0 1.05">
-        <site name='thigh_joint' pos='0 0 0' type='sphere' group='4' size='0.06'/>
         <joint axis="0 -1 0" name="thigh_joint" pos="0 0 1.05" range="-150 0" type="hinge"/>
+        <site name='thigh_joint' pos='0 0 1.05' type='sphere' group='4' size='0.06'/>
         <geom friction="0.9" fromto="0 0 1.05 0 0 0.6" name="thigh_geom" size="0.05" type="capsule"/>
         <body name="leg" pos="0 0 0.35">
-          <site name='leg_joint' pos='0 0 0.6' type='sphere' group='4' size='0.06'/>
           <joint axis="0 -1 0" name="leg_joint" pos="0 0 0.6" range="-150 0" type="hinge"/>
+          <site name='leg_joint' pos='0 0 0.6' type='sphere' group='4' size='0.06'/>
           <geom friction="0.9" fromto="0 0 0.6 0 0 0.1" name="leg_geom" size="0.04" type="capsule"/>
           <body name="foot" pos="0.13/2 0 0.1">
-            <site name='foot_joint' pos='0 0 0.1' type='sphere' group='4' size='0.06'/>
             <joint axis="0 -1 0" name="foot_joint" pos="0 0 0.1" range="-45 45" type="hinge"/>
+            <site name='foot_joint' pos='0 0 0.1' type='sphere' group='4' size='0.06'/>
             <geom friction="2.0" fromto="-0.13 0 0.1 0.26 0 0.1" name="foot_geom" size="0.06" type="capsule"/>
           </body>
         </body>

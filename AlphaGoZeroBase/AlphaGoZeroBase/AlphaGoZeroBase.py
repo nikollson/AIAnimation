@@ -31,8 +31,8 @@ for step in range(100):
     evaluater.Start()
     
 
-#viewer = Viewer(allConfig)
-#viewer.Start()
+viewer = Viewer(allConfig)
+viewer.Start()
 
     
 
