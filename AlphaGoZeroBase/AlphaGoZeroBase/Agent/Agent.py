@@ -17,16 +17,16 @@ class AgentConfig:
         self.SearchDepthMax = 1000
         self.CPuct = 5
         self.DiriclhetAlpha = 0.03
-        self.DiriclhetEpsilon = 0.25
+        self.DiriclhetEpsilon = 0.15
         self.PolicyTau = tau
-        self.PolicyTauMaxTime = 0.5
+        self.PolicyTauMaxTime = 0.3
 
     def GetTau(self, time, maxTime):
 
-        if time <= self.PolicyTauMaxTime:
+        if time/maxTime <= self.PolicyTauMaxTime:
             return self.PolicyTau
 
-        par = 1 - (time-self.PolicyTauMaxTime) / (maxTime-self.PolicyTauMaxTime)
+        par = 1 - (time/maxTime - self.PolicyTauMaxTime)/(1-self.PolicyTauMaxTime)
 
         return  par * self.PolicyTau
 
