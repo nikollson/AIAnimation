@@ -113,3 +113,7 @@ class MujocoEnv:
     def GetScore(self):
 
         return self.Task.GetScore(self.Sim)
+
+    def GetTime(self):
+
+        return self.Sim.data.time

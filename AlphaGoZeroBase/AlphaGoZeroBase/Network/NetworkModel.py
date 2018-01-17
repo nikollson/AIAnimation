@@ -132,7 +132,6 @@ class NetworkModel:
 
     def OptimizePatch(self, observeArray, policyArray, valueArray):
         self.Model.fit(observeArray, [policyArray, valueArray])
-        self.OptimizeCount += 1
 
         
     def loss_policy(y_true, y_pred):

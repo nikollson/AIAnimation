@@ -23,6 +23,7 @@ class Optimizer:
         self.ObserveList = -1
         self.PolicyList = -1
         self.ValueList = -1
+        self.TrainCount = 0
 
 
     def Start(self):
@@ -85,6 +86,8 @@ class Optimizer:
                     self.Data[addIndex].popleft()
                     self.DataAddedIndex.popleft()
 
+                self.TrainCount += 1
+
             print("** File Loaded ** data len = "+str(self.DataLength))
             
             if self.DataLength >= self.Config.Worker.TrainDataMax:
@@ -137,14 +140,19 @@ class Optimizer:
             self.PolicyList[i] = np.array(policy)
             self.ValueList[i] = score
 
-        averageScore = np.sum(self.ValueList) / len(self.ValueList)
+        copy = list(self.ValueList)
+        copy.sort()
+
+        centerScore = copy[int(len(copy)/2)]
 
         for i in range(len(self.ValueList)):
-            self.ValueList[i] = -1 if self.ValueList[i]<averageScore else 1
+            self.ValueList[i] = -1 if self.ValueList[i]<centerScore else 1
 
-        net.Compile(self.Config.NetworkCompile())
+        net.Compile(self.Config.NetworkCompile(net.OptimizeCount))
         net.OptimizePatch(self.ObserveList, self.PolicyList, self.ValueList)
 
+        net.OptimizeCount += self.TrainCount
+        self.TrainCount = 0
 
         net.Save(self.Config.FilePath.NextGeneration.Config, self.Config.FilePath.NextGeneration.Weight)
 

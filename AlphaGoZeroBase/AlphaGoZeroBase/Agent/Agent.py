@@ -10,14 +10,23 @@ import json
 
 class AgentConfig:
 
-    def __init__(self, searchAmount, beamWidth):
+    def __init__(self, searchAmount, beamWidth, tau, tauZeroTime):
 
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 1000
         self.CPuct = 5
-        self.DiriclhetAlpha = 0.5
-        self.PlicyTau = 1
+        self.DiriclhetAlpha = 0.03
+        self.DiriclhetEpsilon = 0.3
+        self.PolicyTau = tau
+        self.PolicyTauZeroTime = tauZeroTime
+
+    def GetTau(self, time):
+
+        if time>self.PolicyTauZeroTime:
+            return 0
+
+        return self.PolicyTau
 
 
 class Node:
@@ -31,7 +40,7 @@ class Node:
         self.Parent = parent
         self.State = None
         self.Observation = None
-        self.PickedTransition = None
+        self.PickedPolicy = None
         self.PickedList = None
         self.N = 0
         self.W = 0
@@ -66,23 +75,43 @@ class Node:
         return value
 
 
-    def PickTopChild(self):
+    def PickTopChild(self, tau):
 
-        if self.PickedTransition == None:
-            self.PickedTransition = [child.N for child in self.Children]
+        if self.PickedList == None:
             self.PickedList = [False for _ in range(len(self.Children))]
 
         nList = []
         aList = []
         for i in range(len(self.Children)):
-            if self.PickedList[i]==False:
-                nList.append(self.Children[i].N)
-                aList.append(i)
+            nn = self.Children[i].N
+            if self.PickedList[i]==True:
+                nn=0
+            nList.append(nn)
+            aList.append(i)
+        
+        if tau == 0:
+            maxi = np.argmax(nList)
+            for i in range(len(nList)):
+                if i==maxi:
+                    nList[i]=1
+                else:
+                    nList[i]=0
+        else:
+            sum = 0
+            for i in range(len(nList)):
+                nList[i] = np.power(nList[i], 1/tau)
+                sum += nList[i]
 
-        action = aList[np.argmax(nList)]
+            for i in range(len(nList)):
+                nList[i] /= sum
+            
+        action = np.random.choice(aList, p=nList)
 
         self.PickedList[action] = True
 
+        if self.PickedPolicy==None:
+            self.PickedPolicy = nList
+        
         self.N -= self.Children[action].N;
         self.W -= self.Children[action].W;
         self.Q = self.W / self.N;
@@ -90,7 +119,7 @@ class Node:
         return self.Children[action]
 
 
-    def GetBestAction_PUCT(self, cPuct, dirichletAlpha, doAddNoise):
+    def GetBestAction_PUCT(self, cPuct, dirichletAlpha, dirichletEpsilon, doAddNoise):
 
         sumN = np.sqrt(self.N)
 
@@ -100,7 +129,7 @@ class Node:
         noise = np.zeros(len(self.Children))
 
         if doAddNoise:
-            noise = np.random.dirichlet([dirichletAlpha for _ in range(len(self.Children))])
+            noise = np.random.dirichlet([dirichletAlpha for _ in range(len(self.Children))]) * dirichletEpsilon
 
         for i in range(len(self.Children)):
 
@@ -190,7 +219,8 @@ class Agent:
 
                 for child in searchRoot.Children:
                     if child.N >= self.Config.SearchAmount:
-                        self.StepTarget[i+1].append(child.PickTopChild())
+                        tau = self.Config.GetTau(self.Env.GetTime())
+                        self.StepTarget[i+1].append(child.PickTopChild(tau))
 
                 if len(self.StepTarget[i+1]) >= self.Config.BeamWidth:
                     break
@@ -227,7 +257,8 @@ class Agent:
             value = node.Expand(self.Network, self.Env)
             return value
 
-        action = node.GetBestAction_PUCT(self.Config.CPuct, self.Config.DiriclhetAlpha, noiseEnable>0)
+        action = node.GetBestAction_PUCT(self.Config.CPuct, self.Config.DiriclhetAlpha, 
+                                         self.Config.DiriclhetEpsilon, noiseEnable>0)
 
         if action == None:
             return None
@@ -257,15 +288,12 @@ class Agent:
             if node.Parent == None:
                 break
 
-            if node.PickedTransition==None :
+            if node.PickedPolicy==None :
                 continue
 
-            transition = node.PickedTransition;
+            policy = node.PickedPolicy
 
-            policy = np.power(transition, 1/self.Config.PlicyTau)
-            policy /= np.sum(policy)
-
-            trainData.append(list([node.Observation.tolist(), policy.tolist(), value]))
+            trainData.append(list([node.Observation.tolist(), policy, value]))
 
         trainData.reverse()
 
