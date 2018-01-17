@@ -58,6 +58,9 @@ class Evaluater:
 
         nextWin = 0
 
+        samplingCount = 0
+        samplingOKCount = 0
+
         print("Buttle Start")
 
         for i in range(self.Config.Worker.EvaluateButtle):
@@ -71,16 +74,32 @@ class Evaluater:
             bestScore = self.GetScore(bestEnv, bestinit, bestAction)
             nextScore = self.GetScore(nextEnv, nextinit, nextAction)
 
-            bestAgent.SaveTrainData(self.Config.GetTrainPath("A"))
-            nextAgent.SaveTrainData(self.Config.GetTrainPath("B"))
+
+            samplingTarget = int((i+1)/self.Config.Worker.EvaluateButtle * self.Config.Worker.EvaluateTimeStepSampling)
+            for j in range(samplingTarget - samplingCount):
+
+                p = random.randint(0, min(len(bestAgent.TrainData), len(nextAgent.TrainData))-1)
+
+                bestPolicy, bestValue = next.Model.predict_on_batch(np.array([bestAgent.TrainData[p][0]]))
+                nextPolicy, nextValue = next.Model.predict_on_batch(np.array([nextAgent.TrainData[p][0]]))
+
+                samplingCount += 1
+                samplingResult = (bestValue[0] < nextValue[0]) == (bestScore < nextScore)
+                if samplingResult==True:
+                    samplingOKCount+=1
+
+            nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
 
             if nextScore >= bestScore:
                 nextWin += 1
 
             print("Buttle "+str(i)+" "+str(nextScore>=bestScore))
 
+
         winRate = nextWin / self.Config.Worker.EvaluateButtle
+        samplingRate = samplingOKCount / samplingCount
         print("WinRate "+str(winRate))
+        print("SamplingOK "+str(samplingRate))
 
         if winRate >= self.Config.Worker.EvaluateWinRate:
 
@@ -88,6 +107,14 @@ class Evaluater:
 
             next.OptimizeCount = 0
             next.Save(self.Config.FilePath.BestModel.Config, self.Config.FilePath.BestModel.Weight)
+
+            if samplingRate >= self.Config.Worker.EvaluateTimeStepUpdateRate:
+
+                nextLimit = nextTask.Config.LimitTime * self.Config.Worker.EvaluateTimeStepUpdateScale
+                
+                print("!! TimeStepUpdate "+str(nextTask.Config.LimitTime)+" -> "+str(nextLimit))
+                nextTask.Config.LimitTime = nextLimit
+
             nextTask.Save(self.Config.FilePath.BestModel.Task)
 
             bestLog = self.Config.GetBestLog()

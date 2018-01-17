@@ -44,6 +44,8 @@ class Optimizer:
         dataList = os.listdir(dataDir)
         inputN = net.Model.input_shape[1] * 2 + 1
 
+        isFirst = False
+
         if self.Data == None:
 
             self.Data = []
@@ -51,11 +53,13 @@ class Optimizer:
             for i in range(inputN):
                 self.Data.append(deque())
 
+            isFirst = True
+
 
         for i in range(len(dataList)):
 
             filePath = dataDir + "/" + dataList[len(dataList)-i-1]
-        
+
             if filePath in self.LoadedData:
                 break
             
@@ -90,7 +94,7 @@ class Optimizer:
 
             print("** File Loaded ** data len = "+str(self.DataLength))
             
-            if self.DataLength >= self.Config.Worker.TrainDataMax:
+            if isFirst and self.DataLength >= self.Config.Worker.TrainDataMax:
                 break;
 
     def LoadNet(self):

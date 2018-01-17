@@ -18,7 +18,7 @@ initializer.Start()
 optimizer = Optimizer(allConfig)
 
 
-for step in range(1):
+for step in range(100):
 
     print("--- Work " + str(step) + " ---")
     
@@ -27,8 +27,8 @@ for step in range(1):
 
     optimizer.Start()
 
-    #evaluater = Evaluater(allConfig)
-    #evaluater.Start()
+    evaluater = Evaluater(allConfig)
+    evaluater.Start()
     
 
 #viewer = Viewer(allConfig)

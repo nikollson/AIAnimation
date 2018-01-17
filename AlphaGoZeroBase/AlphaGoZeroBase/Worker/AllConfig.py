@@ -21,9 +21,12 @@ class WorkerConfig:
     def __init__(self):
         self.TrainBatchSize = 1000
         self.TrainDataMax = 2000
-        self.CheckPointLength = 100
-        self.EvaluateButtle = 2
+        self.CheckPointLength = 1
+        self.EvaluateButtle = 1
         self.EvaluateWinRate = 0.49
+        self.EvaluateTimeStepSampling = 5000
+        self.EvaluateTimeStepUpdateRate = 0.9
+        self.EvaluateTimeStepUpdateScale = 1.1
 
 class AllConfig:
     def __init__(self):
