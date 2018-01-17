@@ -31,9 +31,9 @@ class WorkerConfig:
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(8, 1, 1, 0.5)
-        self.EvaluateAgent = AgentConfig(8,1, 0, 0)
-        self.ViewerAgent = AgentConfig(8, 1, 0, 0)
+        self.SelfPlayAgent = AgentConfig(8, 1, 1)
+        self.EvaluateAgent = AgentConfig(8,1, 0)
+        self.ViewerAgent = AgentConfig(8, 1, 0)
 
         self.InitializeTask = TaskConfig(0.2, 0.3)
 
