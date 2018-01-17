@@ -19,8 +19,8 @@ class NetworkConfig:
 
 class WorkerConfig:
     def __init__(self):
-        self.TrainBatchSize = 2048
-        self.TrainDataMax = 10000
+        self.TrainBatchSize = 4096
+        self.TrainDataMax = 20000
         self.CheckPointLength = 4
         self.EvaluateButtle = 2
         self.EvaluateWinRate = 0.49
@@ -29,8 +29,8 @@ class AllConfig:
     def __init__(self):
 
         self.SelfPlayAgent = AgentConfig(30, 1)
-        self.ViewerAgent = AgentConfig(30, 1)
         self.EvaluateAgent = AgentConfig(30,1)
+        self.ViewerAgent = AgentConfig(5, 1)
 
         self.InitializeTask = TaskConfig(1, 0.3)
 

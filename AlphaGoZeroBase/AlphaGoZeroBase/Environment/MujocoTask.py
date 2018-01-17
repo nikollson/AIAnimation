@@ -33,7 +33,7 @@ class MujocoTask:
         joints = self.Model.JointList
 
         for joint in joints:
-            self.Target[joint.Site] = sim.data.get_site_xpos(joint.Site) + np.array([0,0,-config.TargetDistance])
+            self.Target[joint.Site] = sim.data.get_site_xpos(joint.Site) + np.array([config.TargetDistance,0,0])
 
             
     def Load(model:MujocoModel, fileName):

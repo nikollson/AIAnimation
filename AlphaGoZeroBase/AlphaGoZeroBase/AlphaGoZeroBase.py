@@ -22,13 +22,13 @@ for step in range(0):
 
     print("--- Work " + str(step) + " ---")
     
-    worker = SelfPlay(allConfig)
-    worker.Start()
+    #worker = SelfPlay(allConfig)
+    #worker.Start()
 
-    optimizer.Start()
+    #optimizer.Start()
 
-    evaluater = Evaluater(allConfig)
-    evaluater.Start()
+    #evaluater = Evaluater(allConfig)
+    #evaluater.Start()
     
 
 viewer = Viewer(allConfig)
