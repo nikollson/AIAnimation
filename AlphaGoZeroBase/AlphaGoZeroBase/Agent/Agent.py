@@ -19,7 +19,7 @@ class AgentConfig:
         self.DiriclhetAlpha = 0.03
         self.DiriclhetEpsilon = 0.25
         self.PolicyTau = tau
-        self.PolicyTauMaxTime = 0.4
+        self.PolicyTauMaxTime = 0.5
 
     def GetTau(self, time, maxTime):
 

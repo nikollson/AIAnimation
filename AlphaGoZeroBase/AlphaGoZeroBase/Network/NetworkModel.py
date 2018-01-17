@@ -20,10 +20,10 @@ class BuildConfig:
         self.Regularizer = l2(1e-4)
 
         self.CnnFilterSize = 3
-        self.CnnFilerNum = 30
+        self.CnnFilerNum = 50
 
-        self.MiddleCnnLayerNum = 2
-        self.MiddleCnnFilterNum = 20
+        self.MiddleCnnLayerNum = 1
+        self.MiddleCnnFilterNum = 30
 
         self.ValueNodeNum = 30
 

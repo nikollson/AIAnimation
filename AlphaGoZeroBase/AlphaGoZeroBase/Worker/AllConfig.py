@@ -19,23 +19,23 @@ class NetworkConfig:
 
 class WorkerConfig:
     def __init__(self):
-        self.TrainBatchSize = 1000
-        self.TrainDataMax = 2000
-        self.CheckPointLength = 1
-        self.EvaluateButtle = 1
+        self.TrainBatchSize = 2048*10
+        self.TrainDataMax = 50000
+        self.CheckPointLength = 50
+        self.EvaluateButtle = 2
         self.EvaluateWinRate = 0.49
-        self.EvaluateTimeStepSampling = 5000
+        self.EvaluateTimeStepSampling = 3000
         self.EvaluateTimeStepUpdateRate = 0.9
         self.EvaluateTimeStepUpdateScale = 1.1
 
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(8, 1, 1)
-        self.EvaluateAgent = AgentConfig(8,1, 0)
-        self.ViewerAgent = AgentConfig(8, 1, 0)
+        self.SelfPlayAgent = AgentConfig(100, 1, 1)
+        self.EvaluateAgent = AgentConfig(100, 1, 0)
+        self.ViewerAgent = AgentConfig(100, 1, 0)
 
-        self.InitializeTask = TaskConfig(0.2, 0.3)
+        self.InitializeTask = TaskConfig(1, 0.5)
 
         self.Build = BuildConfig()
         self.FilePath = NetworkConfig()
