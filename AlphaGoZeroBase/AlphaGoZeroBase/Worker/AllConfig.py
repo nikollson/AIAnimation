@@ -26,7 +26,7 @@ class WorkerConfig:
         self.TrainLoop = 5
         self.OptimizeReluEdge = 0.2
         self.EvaluateButtle = 1
-        self.EvaluateWinRate = 0.49
+        self.EvaluateWinRate = 0.55
         self.EvaluateTimeStepSampling = 10
         self.EvaluateTimeStepUpdateRate = -1
         self.EvaluateTimeStepUpdateScale = 1.02
