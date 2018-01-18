@@ -85,8 +85,9 @@ class Evaluater:
                 nextPolicy, nextValue = next.Model.predict_on_batch(np.array([nextAgent.TrainData[p][0]]))
 
                 samplingCount += 1
-                samplingResult = (bestValue[0]-self.Config.Worker.EvaluateTimeStepEpsilon < nextValue[0]) == (bestScore <= nextScore)
-                if samplingResult==True:
+                valueNextBigger = bestValue[0]-self.Config.Worker.EvaluateTimeStepEpsilon < nextValue[0]
+                scoreNextBigger = bestScore-self.Config.Worker.EvaluateTimeStepEpsilon < nextScore
+                if valueNextBigger==scoreNextBigger:
                     samplingOKCount+=1
 
             nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))

@@ -66,7 +66,7 @@ class MujocoTask:
         score = sum / len(joints)
 
         if score >= self.Config.ClearScore:
-            return score + self.Config.ClearBonusScore - sim.data.time
+            return self.Config.ClearBonusScore - sim.data.time
 
         return score
 

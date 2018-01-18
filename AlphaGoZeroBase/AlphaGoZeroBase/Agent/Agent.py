@@ -10,15 +10,16 @@ import json
 
 class AgentConfig:
 
-    def __init__(self, searchAmount, beamWidth, tau):
+    def __init__(self, searchAmount, beamWidth, tau, endTau):
 
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 1000
         self.CPuct = 4
         self.DiriclhetAlpha = 0.025
-        self.DiriclhetEpsilon = 0.2
+        self.DiriclhetEpsilon = 0.3
         self.PolicyTau = tau
+        self.PolicyEndTau = endTau
         self.PolicyTauMaxTime = 0.3
 
     def GetTau(self, time, maxTime):
@@ -28,7 +29,7 @@ class AgentConfig:
 
         par = 1 - (time/maxTime - self.PolicyTauMaxTime)/(1-self.PolicyTauMaxTime)
 
-        return  par * self.PolicyTau
+        return  par * (self.PolicyTau-self.PolicyEndTau) + self.PolicyEndTau
 
 
 class Node:

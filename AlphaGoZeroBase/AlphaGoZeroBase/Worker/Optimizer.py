@@ -183,7 +183,9 @@ class Optimizer:
 
             self.ValueList[i] = insertPer
 
-        net.Compile(self.Config.NetworkCompile(net.OptimizeCount))
+        compileParam = self.Config.NetworkCompile(net.OptimizeCount)
+        print("Compile "+str(compileParam.LearningRate))
+        net.Compile(compileParam)
 
         for i in range(self.Config.Worker.TrainLoop):
             net.OptimizePatch(self.ObserveList, self.PolicyList, self.ValueList)
