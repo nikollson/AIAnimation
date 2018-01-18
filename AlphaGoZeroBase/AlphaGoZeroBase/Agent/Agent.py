@@ -91,7 +91,7 @@ class Node:
             nList.append(nn)
             aList.append(i)
         
-        if tau <= 0.00001:
+        if tau <= 0.05:
             maxi = np.argmax(nList)
             for i in range(len(nList)):
                 if i==maxi:
