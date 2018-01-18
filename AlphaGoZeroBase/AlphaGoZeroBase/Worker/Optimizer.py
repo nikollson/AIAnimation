@@ -115,8 +115,6 @@ class Optimizer:
 
                 self.Data[addIndex].popleft()
                 self.DataAddedIndex.popleft()
-                
-        print("** All File Loaded ** data len = "+str(self.DataLength))
 
 
     def LoadNet(self):

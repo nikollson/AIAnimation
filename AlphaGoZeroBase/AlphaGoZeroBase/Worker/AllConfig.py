@@ -35,7 +35,7 @@ class WorkerConfig:
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(180, 1, 0.6)
+        self.SelfPlayAgent = AgentConfig(180, 1, 0.5)
         self.EvaluateAgent = AgentConfig(180, 1, 0)
         self.ViewerAgent = AgentConfig(180, 1, 0)
 
@@ -57,7 +57,7 @@ class AllConfig:
         if per < 0.5:
             return CompileConfig(7e-2)
 
-        if per < 0.8:
+        if per < 0.7:
             return CompileConfig(5e-2)
 
         return CompileConfig(3e-2)

@@ -17,7 +17,7 @@ class AgentConfig:
         self.SearchDepthMax = 1000
         self.CPuct = 3
         self.DiriclhetAlpha = 0.025
-        self.DiriclhetEpsilon = 0.15
+        self.DiriclhetEpsilon = 0.2
         self.PolicyTau = tau
         self.PolicyTauMaxTime = 0.3
 
