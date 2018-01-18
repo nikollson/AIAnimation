@@ -11,5 +11,5 @@ allConfig = AllConfig()
 initializer = Initializer(allConfig)
 optimizer = Optimizer(allConfig)
 
-for _ in range(50):
+for _ in range(200):
     optimizer.Start()

@@ -19,9 +19,9 @@ class NetworkConfig:
 
 class WorkerConfig:
     def __init__(self):
-        self.TrainBatchSize = 2048*10
-        self.TrainDataMax = 50000
-        self.CheckPointLength = 40
+        self.TrainBatchSize = 2048
+        self.TrainDataMax = 5000
+        self.CheckPointLength = 30
         self.EvaluateButtle = 2
         self.EvaluateWinRate = 0.49
         self.EvaluateTimeStepSampling = 3000
@@ -31,8 +31,8 @@ class WorkerConfig:
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(40, 1, 1)
-        self.EvaluateAgent = AgentConfig(40, 1, 0)
+        self.SelfPlayAgent = AgentConfig(100, 1, 0.4)
+        self.EvaluateAgent = AgentConfig(100, 1, 0)
         self.ViewerAgent = AgentConfig(100, 1, 0)
 
         self.InitializeTask = TaskConfig(0.7, 0.5)
@@ -51,12 +51,12 @@ class AllConfig:
         per = optimizeStep/self.Worker.CheckPointLength
 
         if per < 0.4:
-            return CompileConfig(1e-2)
+            return CompileConfig(5e-2)
 
         if per < 0.6:
-            return CompileConfig(1e-3)
+            return CompileConfig(5e-3)
 
-        return CompileConfig(1e-4)
+        return CompileConfig(5e-4)
 
     def GetBestLog(self):
         return ModelFileConfig(self.BestLogDir + "/BestLog" + self.GetDirStr())

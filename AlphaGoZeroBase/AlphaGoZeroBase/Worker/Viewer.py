@@ -32,19 +32,7 @@ class Viewer:
         agent = Agent(agentConfig, net, model, task)
         
         state = env.GetSimState()
-        #bestAction = agent.SearchBestAction(state)
-
-        bestAction = []
-        for i in range(80):
-            bestAction.append(1)
-            bestAction.append(3)
-            bestAction.append(1)
-            bestAction.append(3)
-            bestAction.append(5)
-            bestAction.append(1)
-            bestAction.append(3)
-            bestAction.append(4)
-            bestAction.append(4)
+        bestAction = agent.SearchBestAction(state)
 
         while True:
 
@@ -53,9 +41,6 @@ class Viewer:
             for action in bestAction:
 
                 env.Step(action)
-                
-                print()
-                print(env.GetObservation())
 
                 env.Render()
 
