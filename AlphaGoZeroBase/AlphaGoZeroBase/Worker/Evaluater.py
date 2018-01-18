@@ -84,7 +84,7 @@ class Evaluater:
                 nextPolicy, nextValue = next.Model.predict_on_batch(np.array([nextAgent.TrainData[p][0]]))
 
                 samplingCount += 1
-                samplingResult = (bestValue[0] < nextValue[0]) == (bestScore < nextScore)
+                samplingResult = (bestValue[0] < nextValue[0]) == (bestScore <= nextScore)
                 if samplingResult==True:
                     samplingOKCount+=1
 
@@ -92,6 +92,9 @@ class Evaluater:
 
             if nextScore > bestScore:
                 nextWin += 1
+
+            if nextScore == bestScore:
+                nextWin += 0.5
 
             print("Buttle "+str(i)+" "+str(nextScore>=bestScore))
 

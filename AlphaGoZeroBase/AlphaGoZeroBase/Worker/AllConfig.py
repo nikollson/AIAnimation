@@ -19,9 +19,10 @@ class NetworkConfig:
 
 class WorkerConfig:
     def __init__(self):
-        self.TrainBatchSize = 2048*10
-        self.TrainDataMax = 8000
-        self.CheckPointLength = 32
+        self.TrainBatchSize = 2048*5
+        self.TrainDataMax = 5000
+        self.TrainLoop = 10
+        self.CheckPointLength = 40
         self.EvaluateButtle = 2
         self.EvaluateWinRate = 0.49
         self.EvaluateTimeStepSampling = 3000
@@ -53,10 +54,10 @@ class AllConfig:
         if per < 0.4:
             return CompileConfig(5e-2)
 
-        if per < 0.6:
-            return CompileConfig(5e-3)
+        if per < 0.7:
+            return CompileConfig(1e-2)
 
-        return CompileConfig(5e-4)
+        return CompileConfig(5e-3)
 
     def GetBestLog(self):
         return ModelFileConfig(self.BestLogDir + "/BestLog" + self.GetDirStr())
