@@ -7,9 +7,19 @@ from Worker.Initializer import Initializer
 from Worker.AllConfig import AllConfig
 from Worker.Evaluater import Evaluater
 
+
+import time
+
 allConfig = AllConfig()
 
-evaluater = Evaluater(allConfig)
-evaluater.Start()
+
+for _ in range(100000):
+    evaluater = Evaluater(allConfig)
+    ret = evaluater.Start()
+
+    if ret == True:
+        break
+
+    time.sleep(0.2)
 
 

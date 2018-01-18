@@ -17,9 +17,10 @@ class Optimizer:
 
         self.Config = config
         self.Data = None
-        self.DataAddedIndex = deque()
         self.DataLength = 0
+        self.DataAddedIndex = deque()
         self.LoadedData = set()
+        self.DataLengthList = deque()
 
         self.ObserveList = -1
         self.PolicyList = -1
@@ -56,14 +57,24 @@ class Optimizer:
 
             isFirst = True
 
+        loadDataList = []
 
-        for i in range(len(dataList)):
+        for i in range(min(self.Config.Worker.TrainDataMax, len(dataList))):
 
             filePath = dataDir + "/" + dataList[len(dataList)-i-1]
 
             if filePath in self.LoadedData:
                 break
-            
+
+            loadDataList.append(filePath)
+
+        loadDataList.reverse()
+
+
+        for i in range(len(loadDataList)):
+
+            filePath = loadDataList[i]
+
             self.LoadedData.add(filePath)
 
             print("** File Loading ** " + filePath)
@@ -83,21 +94,30 @@ class Optimizer:
                     self.Data[addIndex].append(d)
                     self.DataAddedIndex.append(addIndex)
 
-                for i in range(self.DataLength-self.Config.Worker.TrainDataMax):
-                    self.DataLength -= 1
-                    
-                    addIndex = self.DataAddedIndex[0]
-
-                    self.Data[addIndex].popleft()
-                    self.DataAddedIndex.popleft()
+                self.DataLengthList.append(len(fileData))
 
                 if isFirst==False:
                     self.TrainCount += 1
 
             print("** File Loaded ** data len = "+str(self.DataLength))
             
-            if isFirst and self.DataLength >= self.Config.Worker.TrainDataMax:
-                break;
+        eraseCount = max(0, len(self.DataLengthList) - self.Config.Worker.TrainDataMax)
+
+        for i in range(eraseCount):
+
+            eraseLen = self.DataLengthList[0]
+            self.DataLengthList.popleft()
+
+            for j in range(eraseLen):
+                self.DataLength -= 1
+                    
+                addIndex = self.DataAddedIndex[0]
+
+                self.Data[addIndex].popleft()
+                self.DataAddedIndex.popleft()
+                
+        print("** All File Loaded ** data len = "+str(self.DataLength))
+
 
     def LoadNet(self):
         

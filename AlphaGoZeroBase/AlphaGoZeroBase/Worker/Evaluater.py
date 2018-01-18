@@ -24,9 +24,10 @@ class Evaluater:
         
         if net.OptimizeCount < self.Config.Worker.CheckPointLength:
             print("Optimze Count "+str(net.OptimizeCount)+" < CheckPointLength");
-            return
+            return False
 
         self.Evaluate(net)
+        return True
 
 
     def LoadNet(self):
