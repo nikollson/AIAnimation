@@ -90,7 +90,8 @@ class Optimizer:
                     self.Data[addIndex].popleft()
                     self.DataAddedIndex.popleft()
 
-                self.TrainCount += 1
+                if isFirst==False:
+                    self.TrainCount += 1
 
             print("** File Loaded ** data len = "+str(self.DataLength))
             
@@ -99,7 +100,7 @@ class Optimizer:
 
     def LoadNet(self):
         
-        net = NetworkModel()
+        net = NetworkModel(False)
         net.Load(self.Config.FilePath.NextGeneration.Config, self.Config.FilePath.NextGeneration.Weight)
 
         return net
@@ -153,7 +154,9 @@ class Optimizer:
             self.ValueList[i] = -1 if self.ValueList[i]<centerScore else 1
 
         net.Compile(self.Config.NetworkCompile(net.OptimizeCount))
-        net.OptimizePatch(self.ObserveList, self.PolicyList, self.ValueList)
+
+        for i in range(self.Config.Worker.TrainLoop):
+            net.OptimizePatch(self.ObserveList, self.PolicyList, self.ValueList)
 
         net.OptimizeCount += self.TrainCount
         self.TrainCount = 0
