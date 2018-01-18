@@ -31,6 +31,7 @@ class WorkerConfig:
         self.EvaluateTimeStepSampling = 3000
         self.EvaluateTimeStepUpdateRate = 0.75
         self.EvaluateTimeStepUpdateScale = 1.1
+        self.EvaluateTimeStepEpsilon = 1e-4
 
 class AllConfig:
     def __init__(self):
