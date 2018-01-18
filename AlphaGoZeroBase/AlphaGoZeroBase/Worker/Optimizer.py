@@ -9,6 +9,7 @@ import os
 import random
 import json
 import numpy as np
+import bisect
 from collections import deque
 
 class Optimizer:
@@ -152,13 +153,17 @@ class Optimizer:
             self.PolicyList[i] = np.array(policy)
             self.ValueList[i] = score
 
-        copy = list(self.ValueList)
-        copy.sort()
 
-        centerScore = copy[int(len(copy)/2)]
+        sortedValue = list(self.ValueList)
+        sortedValue.append(-1000000000)
+        sortedValue.sort()
 
         for i in range(len(self.ValueList)):
-            self.ValueList[i] = -1 if self.ValueList[i]<centerScore else 1
+            relu = self.Config.Worker.OptimizeReluEdge
+            insertPer = (bisect.bisect_left(sortedValue, self.ValueList[i])-1) / (len(self.ValueList)-1)
+            insertPer = min(1, max(0, (insertPer-relu)/(1-2*relu)))*2-1
+
+            self.ValueList[i] = insertPer
 
         net.Compile(self.Config.NetworkCompile(net.OptimizeCount))
 

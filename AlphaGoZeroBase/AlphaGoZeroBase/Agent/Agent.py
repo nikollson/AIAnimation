@@ -15,7 +15,7 @@ class AgentConfig:
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 1000
-        self.CPuct = 5
+        self.CPuct = 4
         self.DiriclhetAlpha = 0.025
         self.DiriclhetEpsilon = 0.15
         self.PolicyTau = tau

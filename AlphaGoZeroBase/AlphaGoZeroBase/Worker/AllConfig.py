@@ -23,16 +23,19 @@ class WorkerConfig:
         self.TrainDataMax = 5000
         self.TrainLoop = 10
         self.CheckPointLength = 40
+        self.TrainLoop = 5
+        self.CheckPointLength = 50
+        self.OptimizeReluEdge = 0.2
         self.EvaluateButtle = 1
         self.EvaluateWinRate = 0.49
         self.EvaluateTimeStepSampling = 3000
-        self.EvaluateTimeStepUpdateRate = 0.9
+        self.EvaluateTimeStepUpdateRate = 0.75
         self.EvaluateTimeStepUpdateScale = 1.1
 
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(150, 1, 0.4)
+        self.SelfPlayAgent = AgentConfig(150, 1, 0.6)
         self.EvaluateAgent = AgentConfig(150, 1, 0)
         self.ViewerAgent = AgentConfig(150, 1, 0)
 
@@ -52,7 +55,7 @@ class AllConfig:
         per = optimizeStep/self.Worker.CheckPointLength
 
         if per < 0.5:
-            return CompileConfig(9e-2)
+            return CompileConfig(7e-2)
 
         if per < 0.8:
             return CompileConfig(5e-2)
