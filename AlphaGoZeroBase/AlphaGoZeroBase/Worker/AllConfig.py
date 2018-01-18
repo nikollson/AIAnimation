@@ -55,9 +55,9 @@ class AllConfig:
         per = optimizeStep/self.Worker.CheckPointLength
 
         if per < 0.5:
-            return CompileConfig(7e-2)
+            return CompileConfig(8e-2)
 
-        if per < 0.7:
+        if per < 0.75:
             return CompileConfig(5e-2)
 
         return CompileConfig(3e-2)
