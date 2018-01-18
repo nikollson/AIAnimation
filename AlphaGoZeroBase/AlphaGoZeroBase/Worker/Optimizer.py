@@ -77,7 +77,7 @@ class Optimizer:
                 for d in fileData:
                     self.DataLength += 1
                     
-                    addIndex = np.argmax(d[2])
+                    addIndex = np.argmax(d[1])
                     
                     self.Data[addIndex].append(d)
                     self.DataAddedIndex.append(addIndex)
@@ -120,6 +120,11 @@ class Optimizer:
             self.PolicyList = np.ndarray((batchN, inputN))
             self.ValueList = np.ndarray(batchN)
 
+        enablePolicy = []
+        for i in range(len(self.Data)):
+            if len(self.Data[i])!=0:
+                enablePolicy.append(i)
+
         for i in range(batchN):
 
             p = random.randint(0, inputN-1)
@@ -128,13 +133,15 @@ class Optimizer:
                 policy = np.zeros(inputN)
                 policy[p] = 1
 
-                for _ in range(100000):
-                    t = random.randint(0, inputN-1)
+                scoreP = random.choice(enablePolicy)
+                score = self.Data[scoreP][random.randint(0, len(self.Data[scoreP])-1)][2]
 
-                    if len(self.Data[t])!=0:
-                        observe = self.Data[t][random.randint(0, len(self.Data[t])-1)][0]
-                        score = self.Data[t][random.randint(0, len(self.Data[t])-1)][2]
-                        break;
+                observe = []
+                for j in range(observeN1):
+                    observeP = random.choice(enablePolicy)
+                    observeP2 = random.randint(0, len(self.Data[observeP])-1)
+                    observe.append(self.Data[observeP][observeP2][0][j])
+
             else:
                 q = random.randint(0, len(self.Data[p])-1)
                 policy = self.Data[p][q][1]
