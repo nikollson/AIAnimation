@@ -17,7 +17,7 @@ class AgentConfig:
         self.SearchDepthMax = 1000
         self.CPuct = 4
         self.DiriclhetAlpha = 0.025
-        self.DiriclhetEpsilon = 0.3
+        self.DiriclhetEpsilon = 0.03
         self.PolicyTau = tau
         self.PolicyEndTau = endTau
         self.PolicyTauMaxTime = 0.3
@@ -218,7 +218,7 @@ class Agent:
             self.StepTarget.append([])
 
             while True:
-                value = self.SearchMoves(searchRoot, 1)
+                value = self.SearchMoves(searchRoot, 100000)
                 
                 if value == None:
                     break

@@ -20,11 +20,10 @@ class NetworkConfig:
 class WorkerConfig:
     def __init__(self):
         self.TrainBatchSize = 2048*5
-        self.TrainDataMax = 50
-        self.TrainLoop = 10
-        self.CheckPointLength = 60
+        self.CheckPointLength = 80
+        self.TrainDataMax = 80
         self.TrainLoop = 5
-        self.OptimizeReluEdge = 0.2
+        self.OptimizeReluEdge = 0.01
         self.EvaluateButtle = 1
         self.EvaluateWinRate = 0.55
         self.EvaluateTimeStepSampling = 10
@@ -35,7 +34,7 @@ class WorkerConfig:
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(200, 1, 0.7, 0.4)
+        self.SelfPlayAgent = AgentConfig(80, 1, 0.5, 0.3)
         self.EvaluateAgent = AgentConfig(200, 1, 0, 0)
         self.ViewerAgent = AgentConfig(200, 1, 0, 0)
 
@@ -54,11 +53,8 @@ class AllConfig:
 
         per = optimizeStep/self.Worker.CheckPointLength
 
-        if per < 0.5:
-            return CompileConfig(8e-2)
-
-        if per < 0.75:
-            return CompileConfig(2e-2)
+        if per < 0.6:
+            return CompileConfig(3e-2)
 
         return CompileConfig(5e-3)
 
