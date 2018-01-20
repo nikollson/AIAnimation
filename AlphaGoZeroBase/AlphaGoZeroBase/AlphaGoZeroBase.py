@@ -18,7 +18,7 @@ initializer.Start()
 optimizer = Optimizer(allConfig)
 
 
-for step in range(100):
+for step in range(1):
 
     print("--- Work " + str(step) + " ---")
     

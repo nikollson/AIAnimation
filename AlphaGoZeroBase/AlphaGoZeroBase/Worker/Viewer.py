@@ -24,23 +24,24 @@ class Viewer:
         net.Load(filePath.Config, filePath.Weight)
         
         model = Model()
-        task = MujocoTask.Load(model, filePath.Task)
-        env = MujocoEnv(model, task)
-
+        task = MujocoTask.LoadRandom(model, self.Config.Task.EvalDir)
+        env = MujocoEnv(model)
 
         agentConfig = self.Config.ViewerAgent
         agent = Agent(agentConfig, net, model, task)
         
-        state = env.GetSimState()
-        bestAction = agent.SearchBestAction(state)
+        bestAction = agent.SearchBestAction()
+
 
         while True:
 
-            env.SetSimState(state)
+            env.SetSimState(task.StartState)
+
 
             for action in bestAction:
 
                 env.Step(action)
-
+                
+                #print(env.GetObservation(task))
                 env.Render()
 

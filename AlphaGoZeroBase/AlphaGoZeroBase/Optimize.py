@@ -12,4 +12,7 @@ initializer = Initializer(allConfig)
 optimizer = Optimizer(allConfig)
 
 for _ in range(30):
-    optimizer.Start()
+    ret = optimizer.Start()
+
+    if ret==False:
+        break

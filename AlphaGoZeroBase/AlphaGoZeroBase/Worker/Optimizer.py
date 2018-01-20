@@ -27,18 +27,26 @@ class Optimizer:
         self.ValueList = -1
         self.TrainCount = 0
 
+        self.PrevNetTimeLimit = -1
+
 
     def Start(self):
         
         net = self.LoadNet()
+
+        if self.Data != None and net.TimeLimit != self.PrevNetTimeLimit:
+            return False
+
+        self.PrevNetTimeLimit = net.TimeLimit
+
         self.FileLoad(net)
 
         if net.OptimizeCount >= self.Config.Worker.CheckPointLength:
             print("Optimze Count "+str(net.OptimizeCount)+" >= CheckPointLength");
-            return
+            return True
 
         self.Optimize(net)
-
+        return True
     
     def FileLoad(self, net:NetworkModel):
 
@@ -98,6 +106,8 @@ class Optimizer:
 
                 if isFirst==False:
                     self.TrainCount += 1
+                if isFirst==True:
+                    self.TrainCount = 1
 
             print("** File Loaded ** data len = "+str(self.DataLength))
             
@@ -129,8 +139,9 @@ class Optimizer:
         index = [random.randint(0, len(self.Data)-1) for _ in range(self.Config.Worker.TrainBatchSize)]
         random.shuffle(index)
 
-        batchN = self.Config.Worker.TrainBatchSize
-        inputN = net.Model.input_shape[1] * 2 + 1
+        batchN = min(len(self.Data), self.Config.Worker.TrainBatchSize)
+
+        inputN = net.Model.output_shape[0][1]
         observeN1 = net.Model.input_shape[1]
         observeN2 = net.Model.input_shape[2]
 
@@ -163,6 +174,10 @@ class Optimizer:
 
             else:
                 q = random.randint(0, len(self.Data[p])-1)
+
+                if random.uniform(0,1) >= self.Config.Worker.TrainBatchRecentlyPar:
+                    q = random.randint(0, int(len(self.Data[p])*self.Config.Worker.TrainDataRecentlyPar))
+
                 policy = self.Data[p][q][1]
                 observe = self.Data[p][q][0]
                 score = self.Data[p][q][2]
@@ -177,10 +192,7 @@ class Optimizer:
         sortedValue.sort()
 
         for i in range(len(self.ValueList)):
-            relu = self.Config.Worker.OptimizeReluEdge
             insertPer = (bisect.bisect_left(sortedValue, self.ValueList[i])-1) / (len(self.ValueList)-1)
-            insertPer = min(1, max(0, (insertPer-relu)/(1-2*relu)))*2-1
-
             self.ValueList[i] = insertPer
 
         compileParam = self.Config.NetworkCompile(net.OptimizeCount)

@@ -13,29 +13,36 @@ class Initializer:
         self.Config = config
 
     def Start(self):
+        self.MakeTasks()
+        self.MakeGenerationModel()
 
+
+    def MakeGenerationModel(self):
+        
         filePath = self.Config.FilePath
 
         hasBest = os.path.exists(filePath.BestModel.Config)
         hasBest |= os.path.exists(filePath.BestModel.Weight)
-        hasBest |= os.path.exists(filePath.BestModel.Task)
         
         hasNext = os.path.exists(filePath.NextGeneration.Config)
         hasNext |= os.path.exists(filePath.NextGeneration.Weight)
-        hasNext |= os.path.exists(filePath.NextGeneration.Task)
 
         if hasBest == False:
 
             model = MujocoModelHumanoid()
-            env = MujocoEnv(model, MujocoTask(model,self.Config.InitializeTask))
+            env = MujocoEnv(model)
+            
+            dataDir = self.Config.Task.TrainDir
+            dataList = os.listdir(dataDir)
+            task = MujocoTask(model, dataDir+"/"+dataList[0])
+
 
             net = NetworkModel()
-            net.Build(self.Config.Build, env.GetObservationShape(), env.GetActionNum())
-            
-            print("Make best model and minimal task.")
+            net.Build(self.Config.Build, env.GetObservationShape(task), env.GetActionNum(), self.Config.Worker.InitialTimeLimit)
+
+            print("Make best model")
 
             net.Save(filePath.BestModel.Config, filePath.BestModel.Weight)
-            env.Task.Save(filePath.BestModel.Task)
 
 
         if hasNext == False:
@@ -44,6 +51,21 @@ class Initializer:
 
             shutil.copyfile(filePath.BestModel.Config, filePath.NextGeneration.Config)
             shutil.copyfile(filePath.BestModel.Weight, filePath.NextGeneration.Weight)
-            shutil.copyfile(filePath.BestModel.Task, filePath.NextGeneration.Task)
 
+
+    def MakeTasks(self):
+        
+        config = self.Config.Task
+
+        taskDataList = os.listdir(config.TrainDir)
+        evalDataList = os.listdir(config.EvalDir)
+
+        if len(taskDataList)!=0 and len(evalDataList)!=0:
+            return
+
+        model = MujocoModelHumanoid()
+
+        model.MakeTaskModelFile(config.ModelValiation, 
+                                config.TrainNum, config.TrainDir,
+                                config.EvalNum, config.EvalDir)
 

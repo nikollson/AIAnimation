@@ -9,7 +9,6 @@ class ModelFileConfig:
     def __init__(self,name):
         self.Config = name + ".cnf"
         self.Weight = name + ".wgt"
-        self.Task = name + ".tsk"
 
 class NetworkConfig:
     def __init__(self):
@@ -19,29 +18,40 @@ class NetworkConfig:
 
 class WorkerConfig:
     def __init__(self):
-        self.TrainBatchSize = 2048*5
-        self.CheckPointLength = 80
-        self.TrainDataMax = 80
-        self.TrainLoop = 5
-        self.OptimizeReluEdge = 0.01
-        self.EvaluateButtle = 1
+        
+        self.InitialTimeLimit = 0.6
+
+        self.TrainDataMax = 200
+        self.TrainDataRecentlyPar = 0.4
+        self.TrainBatchSize = 10
+        self.TrainBatchRecentlyPar = 0.5
+        self.TrainLoop = 2
+        
+        self.CheckPointLength = 1
         self.EvaluateWinRate = 0.55
-        self.EvaluateTimeStepSampling = 10
-        self.EvaluateTimeStepUpdateRate = -1
-        self.EvaluateTimeStepUpdateScale = 1.02
-        self.EvaluateTimeStepEpsilon = 0.0001
+        self.EvaluateTimeStepExpand = 1.05
+
+
+class TaskFileConfig:
+    def __init__(self):
+        self.TrainDir = "TaskTrain"
+        self.EvalDir = "TaskEval"
+
+        self.ModelValiation = 2000
+        self.TrainNum = 100
+        self.EvalNum = 5
+
 
 class AllConfig:
     def __init__(self):
 
-        self.SelfPlayAgent = AgentConfig(80, 1, 0.5, 0.3)
-        self.EvaluateAgent = AgentConfig(200, 1, 0, 0)
-        self.ViewerAgent = AgentConfig(200, 1, 0, 0)
-
-        self.InitializeTask = TaskConfig(0.5, 0.5)
+        self.SelfPlayAgent = AgentConfig(10, 1, 0.5, 0.3)
+        self.EvaluateAgent = AgentConfig(10, 1, 0, 0)
+        self.ViewerAgent = AgentConfig(10, 1, 0, 0)
 
         self.Build = BuildConfig()
         self.FilePath = NetworkConfig()
+        self.Task = TaskFileConfig()
 
         self.TrainDir = "Train"
         self.BestLogDir = "BestLog"

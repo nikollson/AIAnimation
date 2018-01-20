@@ -8,7 +8,7 @@ from Agent.Agent import Agent, AgentConfig
 
 import os
 import json
-
+import random
 
 
 class SelfPlay:
@@ -23,14 +23,20 @@ class SelfPlay:
         net.Load(filePath.Config, filePath.Weight)
         
         model = Model()
-        task = MujocoTask.Load(model, filePath.Task)
-        env = MujocoEnv(model, task)
+        task = MujocoTask(model, self.GetRandomFile())
+        env = MujocoEnv(model)
 
         agentConfig = self.Config.SelfPlayAgent
         agent = Agent(agentConfig, net, model, task)
         
-        state = env.GetSimState()
-        bestAction = agent.SearchBestAction(state)
+        bestAction = agent.SearchBestAction()
+        print(bestAction)
 
         agent.SaveTrainData(self.Config.GetTrainPath())
+
+    def GetRandomFile(self):
+        dir = self.Config.Task.TrainDir
+        dataList = os.listdir(dir)
+
+        return dir+"/"+random.choice(dataList)
 

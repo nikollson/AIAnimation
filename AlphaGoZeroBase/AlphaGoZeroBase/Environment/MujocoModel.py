@@ -10,9 +10,9 @@ class MujocoModel:
         
         self.JointList = self.GetJointList()
 
-        self.NActuator = len(self.JointList)
+        self.NActuator = len(self.MujocoModel.actuator_names)
         self.NAction = self.NActuator * 2 + 1
-        
+
         # self.Naction - 1 means no action
         self.NoneAction = self.NAction - 1
 
@@ -33,7 +33,6 @@ class MujocoModel:
 
     def GetJointList(self):
         return []
-
 
     class Joint:
         def __init__(self,  joint, site, jointPosition, jointVelocity,

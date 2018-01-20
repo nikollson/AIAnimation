@@ -6,7 +6,7 @@ from Network.NetworkModel import NetworkModel
 
 import numpy as np
 import json
-
+import bisect
 
 class AgentConfig:
 
@@ -22,6 +22,9 @@ class AgentConfig:
         self.PolicyEndTau = endTau
         self.PolicyTauMaxTime = 0.3
 
+        self.ValueCalculatorPath = "ValueCalc.txt"
+        self.ValueSaveMax = 10000
+
     def GetTau(self, time, maxTime):
 
         if time/maxTime <= self.PolicyTauMaxTime:
@@ -31,6 +34,33 @@ class AgentConfig:
 
         return  par * (self.PolicyTau-self.PolicyEndTau) + self.PolicyEndTau
 
+
+class ValueCaluculator:
+    def __init__(self, filePath, maxLength):
+        self.FilePath = filePath
+        self.MaxLength = maxLength
+        self.Data = [-10000000]
+        
+        try:
+            with open(filePath, "rt") as f:
+                self.Data = json.load(f)
+        except:
+            pass
+
+    def CalcValue(self, score):
+        insertPos = bisect.bisect_right(self.Data, score)
+        return insertPos / len(self.Data)
+    
+    def AppendScore(self, score):
+        insertPos = bisect.bisect_right(self.Data, score)
+        self.Data.insert(insertPos, score)
+
+        if len(self.Data)>=self.MaxLength:
+            self.Data.pop(0)
+        
+        with open(self.FilePath, "wt") as f:
+            json.dump(self.Data, f)
+        
 
 class Node:
 
@@ -52,20 +82,23 @@ class Node:
         self.ActionNum = actionNum
 
 
-    def Expand(self, network:NetworkModel, env:MujocoEnv):
+    def Expand(self, network:NetworkModel, env:MujocoEnv, task, valueCalc):
 
         env.SetSimState(self.Parent.State)
         env.Step(self.ActionNum)
 
         self.State = env.GetSimState()
-        self.Observation = env.GetObservation()
-        self.IsTerminate = env.IsTerminate()
-        self.Score = env.GetScore()
+        self.Observation = env.GetObservation(task)
+        self.Score = env.GetScore(task)
+        self.IsTerminate = env.IsTerminate(task, self.Score, network.TimeLimit)
 
         policy_arr, value_arr = network.Model.predict(np.array([self.Observation]))
 
         policy = policy_arr[0] / np.sum(policy_arr[0])
         value = value_arr[0][0]
+
+        if self.IsTerminate == True:
+            value = valueCalc.CalcValue(self.Score)
 
         for i in range(len(policy)):
             self.Children.append(Node(self, policy[i], i))
@@ -184,27 +217,32 @@ class Agent:
 
         self.Config = config
         self.Network = network
-        self.Env = MujocoEnv(model, task)
+        self.Env = MujocoEnv(model)
+        self.Task = task
         self.StepTarget = []
         self.TrainData = list([])
+        self.ValueCalclater = ValueCaluculator(config.ValueCalculatorPath, config.ValueSaveMax)
 
 
-    def SearchBestAction(self, initialState):
+    def SearchBestAction(self):
 
         bestAction = []
         
-        initialNode = RootNode([], initialState)
+        initialNode = RootNode([], self.Task.StartState)
 
         firstNode = Node(initialNode, 1, self.Env.Model.NoneAction)
-        firstNode.Expand(self.Network, self.Env)
+        firstNode.Expand(self.Network, self.Env, self.Task, self.ValueCalclater)
 
         self.StepTarget.append([firstNode])
         
+        printPer = 0
+        print("Simuration Step ", end =" ")
 
         for i in range(self.Config.SearchDepthMax):
             
-            if i%10==0:
-                print("Simuration Step "+str(i))
+            if i/self.Config.SearchDepthMax>=printPer:
+                print(str(int(printPer*100)), end="% ")
+                printPer += 0.1
 
             isEnd = False
 
@@ -225,12 +263,12 @@ class Agent:
 
                 for child in searchRoot.Children:
                     if child.N >= self.Config.SearchAmount:
-                        tau = self.Config.GetTau(self.Env.GetTime(), self.Env.Task.GetLimit())
+                        tau = self.Config.GetTau(self.Env.GetTime(), self.Network.TimeLimit)
                         self.StepTarget[i+1].append(child.PickTopChild(tau))
 
                 if len(self.StepTarget[i+1]) >= self.Config.BeamWidth:
                     break
-
+        print("End")
 
         resultNodes = self.StepTarget[len(self.StepTarget)-1]
         resultNodes.sort(key=lambda x:x.Score, reverse=True)
@@ -245,12 +283,10 @@ class Agent:
 
             self.TrainData.extend(trainData)
 
-            
-
             if i==0:
                 bestAction = self.GetActionList(resultNodes[i])
+                self.ValueCalclater.AppendScore(resultNodes[i].Score)
                 print("result "+str(i)+" "+str(resultNodes[i].Score))
-                print(bestAction)
 
         return bestAction
 
@@ -260,7 +296,7 @@ class Agent:
         assert isinstance(node, Node)
         
         if node.IsExpanded == False:
-            value = node.Expand(self.Network, self.Env)
+            value = node.Expand(self.Network, self.Env, self.Task, self.ValueCalclater)
             return value
 
         action = node.GetBestAction_PUCT(self.Config.CPuct, self.Config.DiriclhetAlpha, 

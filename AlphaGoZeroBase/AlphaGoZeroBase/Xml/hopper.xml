@@ -16,6 +16,7 @@
       <geom friction="0.9" fromto="0 0 1.45 0 0 1.05" name="torso_geom" size="0.05" type="capsule"/>
       <body name="thigh" pos="0 0 1.05">
         <joint axis="0 -1 0" name="thigh_joint" pos="0 0 1.05" range="-150 0" type="hinge"/>
+        <site name='torso' pos='0 0 1.45' type='sphere' group='4' size='0.06'/>
         <site name='thigh_joint' pos='0 0 1.05' type='sphere' group='4' size='0.06'/>
         <geom friction="0.9" fromto="0 0 1.05 0 0 0.6" name="thigh_geom" size="0.05" type="capsule"/>
         <body name="leg" pos="0 0 0.35">
@@ -25,6 +26,7 @@
           <body name="foot" pos="0.13/2 0 0.1">
             <joint axis="0 -1 0" name="foot_joint" pos="0 0 0.1" range="-45 45" type="hinge"/>
             <site name='foot_joint' pos='0 0 0.1' type='sphere' group='4' size='0.06'/>
+            <site name='toe' pos='0.26 0 0.1' type='sphere' group='4' size='0.06'/>
             <geom friction="2.0" fromto="-0.13 0 0.1 0.26 0 0.1" name="foot_geom" size="0.06" type="capsule"/>
           </body>
         </body>
@@ -41,6 +43,9 @@
     <jointpos name='jp_thigh_joint'           joint='thigh_joint'/>
     <jointpos name='jp_leg_joint'           joint='leg_joint'/>
     <jointpos name='jp_foot_joint'           joint='foot_joint'/>
+    <jointpos name='jp_rootx'           joint='rootx'/>
+    <jointpos name='jp_rooty'           joint='rooty'/>
+    <jointpos name='jp_rootz'           joint='rootz'/>
     
     <jointvel name='jv_thigh_joint'           joint='thigh_joint'/>
     <jointvel name='jv_leg_joint'           joint='leg_joint'/>
@@ -49,22 +54,32 @@
     <accelerometer  name='a_thigh_joint'           site='thigh_joint'/>
     <accelerometer  name='a_leg_joint'           site='leg_joint'/>
     <accelerometer  name='a_foot_joint'           site='foot_joint'/>
+    <accelerometer  name='a_torso'           site='torso'/>
+    <accelerometer  name='a_toe'           site='toe'/>
     
     <velocimeter  name='v_thigh_joint'           site='thigh_joint'/>
     <velocimeter  name='v_leg_joint'           site='leg_joint'/>
     <velocimeter  name='v_foot_joint'           site='foot_joint'/>
+    <velocimeter  name='v_torso'           site='torso'/>
+    <velocimeter  name='v_toe'           site='toe'/>
     
     <gyro  name='g_thigh_joint'           site='thigh_joint'/>
     <gyro  name='g_leg_joint'           site='leg_joint'/>
     <gyro  name='g_foot_joint'           site='foot_joint'/>
+    <gyro  name='g_torso'           site='torso'/>
+    <gyro  name='g_toe'           site='toe'/>
     
     <force  name='f_thigh_joint'           site='thigh_joint'/>
     <force  name='f_leg_joint'           site='leg_joint'/>
     <force  name='f_foot_joint'           site='foot_joint'/>
+    <force  name='f_torso'           site='torso'/>
+    <force  name='f_toe'           site='toe'/>
     
     <torque  name='t_thigh_joint'           site='thigh_joint'/>
     <torque  name='t_leg_joint'           site='leg_joint'/>
     <torque  name='t_foot_joint'           site='foot_joint'/>
+    <torque  name='t_torso'           site='torso'/>
+    <torque  name='t_toe'           site='toe'/>
   </sensor>
   <asset>
       <texture type="skybox" builtin="gradient" rgb1=".4 .5 .6" rgb2="0 0 0"

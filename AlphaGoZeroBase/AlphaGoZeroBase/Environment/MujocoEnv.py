@@ -4,17 +4,17 @@ from Environment.MujocoModel import MujocoModel
 from Environment.MujocoTask import MujocoTask, TaskConfig
 from mujoco_py import MjSim, MjViewer
 import numpy as np
+import math
 
 
 class MujocoEnv:
 
 
-    def __init__(self, model : MujocoModel, task : MujocoTask):
+    def __init__(self, model : MujocoModel):
         
         self.Model = model;
         self.Sim = MjSim(self.Model.MujocoModel)
 
-        self.Task = task
         self.Viewer = None
 
 
@@ -50,7 +50,7 @@ class MujocoEnv:
         self.Viewer.render()
 
 
-    def GetObservation(self):
+    def GetObservation(self, task:MujocoTask):
         
         joints = self.Model.JointList
 
@@ -59,18 +59,19 @@ class MujocoEnv:
         ret = None
 
         for i in range(N):
-
             observe = []
 
-            observe.extend(self.GetSensorValue(joints[i].JointPosition))
-            observe.extend(self.GetSensorValue(joints[i].JointVelocity))
-            observe.extend(self.GetSensorValue(joints[i].Accel))
-            observe.extend(self.GetSensorValue(joints[i].Gyro))
-            observe.extend(self.GetSensorValue(joints[i].Torque))
-            observe.extend(self.GetSensorValue(joints[i].Velocity))
+            observe.extend(self.GetSensorValue(1, joints[i].JointPosition))
+            observe.extend(self.GetSensorValue(1, joints[i].JointVelocity))
+            observe.extend(self.GetSensorValue(3, joints[i].Accel))
+            #observe.extend(self.GetSensorValue(3, joints[i].Gyro))
+            #observe.extend(self.GetSensorValue(3, joints[i].Torque))
+            #observe.extend(self.GetSensorValue(3, joints[i].Velocity))
 
-            observe.extend(self.Task.GetJointObservation(self.Sim, joints[i]))
+            #observe.extend(self.MatToAngle(self.Sim.data.get_site_xmat(joints[i].Site)))
 
+            #observe.extend(task.GetJointObservation(self.Sim, joints[i]))
+            
             if i==0:
                 ret = np.zeros((N, len(observe)))
 
@@ -79,13 +80,16 @@ class MujocoEnv:
         return ret
 
 
-    def GetSensorValue(self, sensorName : str):
+    def GetSensorValue(self, dim, sensorName : str):
 
-        if sensorName == "":
-            return 0
+        if (sensorName in self.Sim.model.sensor_names) == False:
+            ret = []
+            for _ in range(dim):
+                ret.append(0)
+            return ret
+
         id = self.Sim.model.sensor_name2id(sensorName)
         adr = self.Sim.model.sensor_adr[id]
-        dim = self.Sim.model.sensor_dim[id]
 
         ret = []
 
@@ -94,24 +98,26 @@ class MujocoEnv:
 
         return ret
     
+    def GetObservationShape(self, task):
 
-    def GetObservationShape(self):
-
-        return self.GetObservation().shape
+        return self.GetObservation(task).shape
     
 
     def GetActionNum(self):
 
         return self.Model.NAction
 
+    
+    def MatToAngle(self, m):
+        return [math.asin(m[2,1]), math.atan2(-m[0,1],m[1,1]), math.atan2(-m[2,0],m[2,2])]
 
-    def IsTerminate(self):
+    def IsTerminate(self, task:MujocoTask, score, timeLimit):
 
-        return self.Task.IsTerminate(self.Sim) or self.Task.IsClear(self.Sim)
+        return task.IsClear(score) or timeLimit <= self.Sim.data.time
 
-    def GetScore(self):
+    def GetScore(self, task:MujocoTask):
 
-        return self.Task.GetScore(self.Sim)
+        return task.GetScore(self.Sim)
 
     def GetTime(self):
 

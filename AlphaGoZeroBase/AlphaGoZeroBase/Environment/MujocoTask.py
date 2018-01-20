@@ -3,55 +3,80 @@ from Environment.MujocoModel import MujocoModel
 from mujoco_py import MjSim
 import numpy as np
 import json
+import os
+import random
+import math
+import bisect
 
 class TaskConfig:
-    def __init__(self, limitTime, targetDistance):
+    def __init__(self, fileName):
         self.ClearScore = -0.1
-        self.ClearBonusScore = 100000
-        self.LimitTime = limitTime
-        self.TargetDistance = targetDistance
+        self.ClearBonusScore = 10000
 
-    def GetList(self):
-        return list([self.LimitTime, self.TargetDistance])
+        self.angleScale = 1/math.pi
+        
+        with open(fileName, "rt") as f:
+            stats = json.load(f)
+            
+        self.StartConfig = stats[0]
+        self.EndConfig = stats[1]
 
-    def SetList(self, a):
-        self.LimitTime = a[0]
-        self.TargetDistance = a[1]
+
 
 class MujocoTask:
 
+    def __init__(self, model : MujocoModel, fileName):
 
-
-    def __init__(self, model : MujocoModel, config:TaskConfig):
-
-        self.Config = config
+        self.FileName = fileName
         self.Model = model
-        self.Target = {}
+        self.Config = TaskConfig(fileName)
+
 
         sim = MjSim(self.Model.MujocoModel)
+
+        self.StartState = self.MakeState(sim, self.Config.StartConfig)
+        self.EndState = self.MakeState(sim, self.Config.EndConfig)
+
+
+        self.TargetPos = {}
+        self.TargetAngle = {}
+        
+        joints = self.Model.JointList
+        
+        sim.set_state(self.EndState)
         sim.step()
 
-        joints = self.Model.JointList
-
         for joint in joints:
-            self.Target[joint.Site] = sim.data.get_site_xpos(joint.Site) + np.array([config.TargetDistance,0,0])
+            self.TargetPos[joint.Site] = np.array(sim.data.get_site_xpos(joint.Site))
+            self.TargetAngle[joint.Site] = np.array(self.MatToAngle(sim.data.get_site_xmat(joint.Site)))
 
+
+    def MakeState(self, sim, stateConfig):
+
+        state = sim.get_state()
+
+        for k,v in stateConfig.items():
+            state.qpos[sim.model.get_joint_qpos_addr(k)] = v
             
-    def Load(model:MujocoModel, fileName):
+        return state
+
+
+    def LoadRandom(model, dir):
         
-        with open(fileName, "rt") as f:
-            a = json.load(f)
-            config = TaskConfig(0,0)
-            config.SetList(a)
+        dataList = os.listdir(dir)
+        return MujocoTask(model, dir+"/"+random.choice(dataList))
+   
+    def MatToAngle(self, m):
+        return [math.asin(m[2,1]), math.atan2(-m[0,1],m[1,1]), math.atan2(-m[2,0],m[2,2])]
 
-        return MujocoTask(model, config)
-
-
-    def Save(self, filePath):
-
-        with open(filePath, "wt") as f:
-            json.dump(self.Config.GetList(), f)
-
+    def DiffAngle(self, a, b):
+        diff = a-b
+        for i in range(len(diff)):
+            if diff[i]>=math.pi:
+                diff[i] -= math.pi*2
+            if diff[i]<=-math.pi:
+                diff[i] += math.pi*2
+        return diff
 
     def GetScore(self, sim : MjSim):
 
@@ -61,38 +86,35 @@ class MujocoTask:
 
         for joint in joints:
             obs = self.GetJointObservation(sim, joint)
-            sum -= obs[3];
+            sum -= obs[3]
+            sum -= obs[7]
 
         score = sum / len(joints)
 
-        if score >= self.Config.ClearScore:
+        if self.IsClear(score):
             return self.Config.ClearBonusScore - sim.data.time
 
         return score
 
     def GetJointObservation(self, sim : MjSim, joint : MujocoModel.Joint):
 
-        target = self.Target[joint.Site]
-        current = sim.data.get_site_xpos(joint.Site)
+        targetPos = self.TargetPos[joint.Site]
+        currentPos = sim.data.get_site_xpos(joint.Site)
 
-        diff = target-current;
-        length = np.linalg.norm(np.array(diff))
+        diffPos = targetPos-currentPos
+        length = np.linalg.norm(np.array(diffPos))
 
-        return [diff[0], diff[1], diff[2], length]
-
-
-    def IsClear(self, sim : MjSim):
-
-        return self.GetScore(sim) > self.Config.ClearScore
-
-
-    def IsTerminate(self, sim : MjSim):
         
-        return sim.data.time >= self.Config.LimitTime
+        targetAngle = self.TargetAngle[joint.Site]
+        currentAngle = self.MatToAngle(sim.data.get_site_xmat(joint.Site))
 
-    def GetLimit(self):
-        return self.Config.LimitTime
+        diffAngle = self.DiffAngle(targetAngle,currentAngle)
+        angleSum = math.fabs(diffAngle[0]) + math.fabs(diffAngle[1]) + math.fabs(diffAngle[2]) 
+        angleSum *= self.Config.angleScale
+
+        return [diffPos[0], diffPos[1], diffPos[2], length,
+                diffAngle[0], diffAngle[1], diffAngle[2], angleSum]
 
 
-
-
+    def IsClear(self, score):
+        return score >= self.Config.ClearScore

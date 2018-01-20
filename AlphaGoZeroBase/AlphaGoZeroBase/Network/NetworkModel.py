@@ -19,11 +19,12 @@ class BuildConfig:
     def __init__(self):
         self.Regularizer = l2(1e-4)
 
-        self.CnnFilterSize = 3
-        self.CnnFilerNum = 256
-
-        self.MiddleCnnLayerNum = 2
-        self.MiddleCnnFilterNum = 128
+        self.InputCnnFilterSize = 1
+        self.InputCnnFilterNum = 512
+        
+        self.MiddleCnnFillterSize = 3
+        self.MiddleCnnLayerNum = 3
+        self.MiddleCnnFilterNum = 256
 
         self.ValueNodeNum = 256
 
@@ -39,6 +40,7 @@ class NetworkModel:
 
         self.Model = None
         self.OptimizeCount = None
+        self.TimeLimit = None
 
         if useCPU:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -53,9 +55,9 @@ class NetworkModel:
         with open(configPath, "wt") as f:
             config = self.Model.get_config()
             config["OptimizeCount"] = self.OptimizeCount
+            config["TimeLimit"] = self.TimeLimit
             json.dump(config, f)
             self.Model.save_weights(weightPath)
-           
 
 
     def Load(self, configPath, weightPath):
@@ -67,18 +69,22 @@ class NetworkModel:
         with open(configPath, "rt") as f:
             config = json.load(f)
             self.OptimizeCount = config["OptimizeCount"]
+            self.TimeLimit = config["TimeLimit"]
             self.Model = Model.from_config(config)
             self.Model.load_weights(weightPath)
 
 
-    def Build(self, config:BuildConfig, observationShape, actionN):
+    def Build(self, config:BuildConfig, observationShape, actionN, timeLimit):
 
         in_x = x = Input(observationShape)
 
         # Input Layer
 
-        x = Conv1D(filters=config.CnnFilerNum, kernel_size=config.CnnFilterSize,
+        x = Conv1D(filters=config.InputCnnFilterNum, kernel_size=config.InputCnnFilterSize,
                    padding="same", kernel_regularizer=config.Regularizer)(x)
+        x = BatchNormalization(axis=1)(x)
+        x = Conv1D(filters=config.MiddleCnnFilterNum, kernel_size=config.MiddleCnnFillterSize, 
+                    padding="same", kernel_regularizer=config.Regularizer)(x)
         x = BatchNormalization(axis=1)(x)
         x = Activation("relu")(x)
 
@@ -89,11 +95,11 @@ class NetworkModel:
 
             start_x = x
             
-            x = Conv1D(filters=config.CnnFilerNum, kernel_size=config.CnnFilterSize, 
+            x = Conv1D(filters=config.MiddleCnnFilterNum, kernel_size=config.MiddleCnnFillterSize, 
                        padding="same", kernel_regularizer=config.Regularizer)(x)
             x = BatchNormalization(axis=1)(x)
             x = Activation("relu")(x)
-            x = Conv1D(filters=config.CnnFilerNum, kernel_size=config.CnnFilterSize, 
+            x = Conv1D(filters=config.MiddleCnnFilterNum, kernel_size=config.MiddleCnnFillterSize, 
                        padding="same", kernel_regularizer=config.Regularizer)(x)
             x = BatchNormalization(axis=1)(x)
             x = Add()([start_x, x])
@@ -128,6 +134,7 @@ class NetworkModel:
 
         self.Model = Model(in_x, [policy_out, value_out], name="animation_model")
         self.OptimizeCount = 0
+        self.TimeLimit = timeLimit
         
 
     def OptimizePatch(self, observeArray, policyArray, valueArray):

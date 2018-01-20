@@ -10,6 +10,7 @@ import random
 import json
 import numpy as np
 import shutil
+import time
 from collections import deque
 
 class Evaluater:
@@ -20,13 +21,16 @@ class Evaluater:
 
     def Start(self):
 
-        net = self.LoadNet()
+        next = self.LoadNet()
         
-        if net.OptimizeCount < self.Config.Worker.CheckPointLength:
-            print("Optimze Count "+str(net.OptimizeCount)+" < CheckPointLength");
+        if next.OptimizeCount < self.Config.Worker.CheckPointLength:
+            print("Optimze Count "+str(next.OptimizeCount)+" < CheckPointLength");
             return False
+        
+        best = NetworkModel()
+        best.Load(self.Config.FilePath.BestModel.Config, self.Config.FilePath.BestModel.Weight)
 
-        self.Evaluate(net)
+        self.EvaluateToBest(best, next)
         return True
 
 
@@ -38,110 +42,93 @@ class Evaluater:
         return net
 
 
-    def Evaluate(self, next):
+    def EvaluateToBest(self, best, next):
 
-        best = NetworkModel()
-        best.Load(self.Config.FilePath.BestModel.Config, self.Config.FilePath.BestModel.Weight)
-
-        bestModel = MujocoModelHumanoid()
-        bestTask = MujocoTask.Load(bestModel, self.Config.FilePath.BestModel.Task)
-        bestEnv = MujocoEnv(bestModel,bestTask)
-
-        bestinit = bestEnv.GetSimState()
-
-
-        nextModel = MujocoModelHumanoid()
-        nextTask = MujocoTask.Load(nextModel, self.Config.FilePath.BestModel.Task)
-        nextEnv = MujocoEnv(nextModel,nextTask)
-
-        nextinit = nextEnv.GetSimState()
+        dataList = os.listdir(self.Config.Task.EvalDir)
         
-
         nextWin = 0
-
-        samplingCount = 0
-        samplingOKCount = 0
-
+        
         print("Buttle Start")
 
-        for i in range(self.Config.Worker.EvaluateButtle):
+        for i in range(len(dataList)):
+            dataName = dataList[i]
 
-            bestAgent = Agent(self.Config.EvaluateAgent, best, bestModel, bestTask)
-            nextAgent = Agent(self.Config.EvaluateAgent, next, nextModel, nextTask)
+            win = self.IsNextWin(best, next, self.Config.Task.EvalDir+"/"+dataName)
+            nextWin += 1 if win else 0
 
-            bestAction = bestAgent.SearchBestAction(bestinit)
-            nextAction = nextAgent.SearchBestAction(nextinit)
+            print("Buttle "+str(i)+" "+str(win))
+            print()
 
-            bestScore = self.GetScore(bestEnv, bestinit, bestAction)
-            nextScore = self.GetScore(nextEnv, nextinit, nextAction)
-
-
-            samplingTarget = int((i+1)/self.Config.Worker.EvaluateButtle * self.Config.Worker.EvaluateTimeStepSampling)
-            for j in range(samplingTarget - samplingCount):
-
-                p = random.randint(0, min(len(bestAgent.TrainData), len(nextAgent.TrainData))-1)
-
-                bestPolicy, bestValue = next.Model.predict_on_batch(np.array([bestAgent.TrainData[p][0]]))
-                nextPolicy, nextValue = next.Model.predict_on_batch(np.array([nextAgent.TrainData[p][0]]))
-
-                samplingCount += 1
-                valueNextBigger = bestValue[0]-self.Config.Worker.EvaluateTimeStepEpsilon < nextValue[0]
-                scoreNextBigger = bestScore-self.Config.Worker.EvaluateTimeStepEpsilon < nextScore
-                if valueNextBigger==scoreNextBigger:
-                    samplingOKCount+=1
-
-            nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
-
-            if nextScore > bestScore:
-                nextWin += 1
-
-            if nextScore == bestScore:
-                nextWin += 0.5
-
-            print("Buttle "+str(i)+" "+str(nextScore>=bestScore))
-
-
-        winRate = nextWin / self.Config.Worker.EvaluateButtle
-        samplingRate = samplingOKCount / samplingCount
+        
+        winRate = nextWin / len(dataList)
         print("WinRate "+str(winRate))
-        print("SamplingOK "+str(samplingRate))
 
         if winRate >= self.Config.Worker.EvaluateWinRate:
 
             print("!! Next Gen Win")
 
             next.OptimizeCount = 0
-            next.Save(self.Config.FilePath.BestModel.Config, self.Config.FilePath.BestModel.Weight)
+            next.TimeLimit *= self.Config.Worker.EvaluateTimeStepExpand
 
-            if samplingRate >= self.Config.Worker.EvaluateTimeStepUpdateRate:
+            while True:
+                try:
+                    next.Save(self.Config.FilePath.BestModel.Config, self.Config.FilePath.BestModel.Weight)
+                    break
+                except:
+                    time.sleep(0.1)
 
-                nextLimit = nextTask.Config.LimitTime * self.Config.Worker.EvaluateTimeStepUpdateScale
-                
-                print("!! TimeStepUpdate "+str(nextTask.Config.LimitTime)+" -> "+str(nextLimit))
-                nextTask.Config.LimitTime = nextLimit
-
-            nextTask.Save(self.Config.FilePath.BestModel.Task)
+            while True:
+                try:
+                    trainDataList = os.listdir(self.Config.TrainDir)
+                    for i in trainDataList:
+                        os.remove(self.Config.TrainDir+"/"+i)
+                    break
+                except:
+                    time.sleep(0.1)
 
             bestLog = self.Config.GetBestLog()
             best.Save(bestLog.Config, bestLog.Weight)
-            bestTask.Save(bestLog.Task)
-            
+
         shutil.copyfile(self.Config.FilePath.BestModel.Config, self.Config.FilePath.NextGeneration.Config)
         shutil.copyfile(self.Config.FilePath.BestModel.Weight, self.Config.FilePath.NextGeneration.Weight)
-        shutil.copyfile(self.Config.FilePath.BestModel.Task, self.Config.FilePath.NextGeneration.Task)
+
+
+
+    def IsNextWin(self, best, next, filePath):
+
+        bestModel = MujocoModelHumanoid()
+        bestTask = MujocoTask(bestModel, filePath)
+        bestEnv = MujocoEnv(bestModel)
+
+
+        nextModel = MujocoModelHumanoid()
+        nextTask = MujocoTask(nextModel, filePath)
+        nextEnv = MujocoEnv(nextModel)
+
+        bestAgent = Agent(self.Config.EvaluateAgent, best, bestModel, bestTask)
+        nextAgent = Agent(self.Config.EvaluateAgent, next, nextModel, nextTask)
+
+        bestAction = bestAgent.SearchBestAction()
+        nextAction = nextAgent.SearchBestAction()
+
+        bestScore = self.GetScore(bestEnv, bestTask, bestAction)
+        nextScore = self.GetScore(nextEnv, nextTask, nextAction)
+
+        nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
+
+        return nextScore > bestScore
 
 
 
 
+    def GetScore(self, env, task, action):
 
-    def GetScore(self, env, state, action):
-
-        env.SetSimState(state)
+        env.SetSimState(task.StartState)
 
         for act in action:
             env.Step(act)
 
-        return env.GetScore()
+        return env.GetScore(task)
 
 
 
