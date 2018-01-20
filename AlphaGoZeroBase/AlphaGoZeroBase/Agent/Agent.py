@@ -10,8 +10,9 @@ import bisect
 
 class AgentConfig:
 
-    def __init__(self, searchAmount, beamWidth, tau, endTau):
+    def __init__(self, valueCalc, searchAmount, beamWidth, tau, endTau):
 
+        self.ValueCalc = valueCalc
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 1000
@@ -22,8 +23,6 @@ class AgentConfig:
         self.PolicyEndTau = endTau
         self.PolicyTauMaxTime = 0.3
 
-        self.ValueCalculatorPath = "ValueCalc.txt"
-        self.ValueSaveMax = 10000
 
     def GetTau(self, time, maxTime):
 
@@ -34,15 +33,19 @@ class AgentConfig:
 
         return  par * (self.PolicyTau-self.PolicyEndTau) + self.PolicyEndTau
 
+class ValueCalcConfig:
+    def __init__(self, valueSaveMax):
+        self.ValueCalculatorPath = "ValueCalc.txt"
+        self.ValueSaveMax = valueSaveMax
 
 class ValueCaluculator:
-    def __init__(self, filePath, maxLength):
-        self.FilePath = filePath
-        self.MaxLength = maxLength
+    def __init__(self, config:ValueCalcConfig):
+        self.FilePath = config.ValueCalculatorPath
+        self.MaxLength = config.ValueSaveMax
         self.Data = [-10000000]
         
         try:
-            with open(filePath, "rt") as f:
+            with open(self.FilePath, "rt") as f:
                 self.Data = json.load(f)
         except:
             pass
@@ -221,7 +224,7 @@ class Agent:
         self.Task = task
         self.StepTarget = []
         self.TrainData = list([])
-        self.ValueCalclater = ValueCaluculator(config.ValueCalculatorPath, config.ValueSaveMax)
+        self.ValueCalclater = ValueCaluculator(config.ValueCalc)
 
 
     def SearchBestAction(self):
@@ -235,14 +238,12 @@ class Agent:
 
         self.StepTarget.append([firstNode])
         
-        printPer = 0
         print("Simuration Step ", end =" ")
 
         for i in range(self.Config.SearchDepthMax):
             
-            if i/self.Config.SearchDepthMax>=printPer:
-                print(str(int(printPer*100)), end="% ")
-                printPer += 0.1
+            if i%20==0:
+                print(str(i), end=" ", flush=True)
 
             isEnd = False
 
@@ -279,14 +280,15 @@ class Agent:
 
             win = True if i < resultCount/2 else False
 
-            trainData = self.MakeTrainData(resultNodes[i], resultNodes[i].Score)
+            value = self.ValueCalclater.CalcValue(resultNodes[i].Score)
+            trainData = self.MakeTrainData(resultNodes[i], value)
 
             self.TrainData.extend(trainData)
 
             if i==0:
                 bestAction = self.GetActionList(resultNodes[i])
                 self.ValueCalclater.AppendScore(resultNodes[i].Score)
-                print("result "+str(i)+" "+str(resultNodes[i].Score))
+                print("result "+str(i)+" Score="+str(resultNodes[i].Score)+"  Value="+str(value))
 
         return bestAction
 

@@ -32,6 +32,8 @@ class Optimizer:
 
     def Start(self):
         
+        print("Optimize Start")
+
         net = self.LoadNet()
 
         if self.Data != None and net.TimeLimit != self.PrevNetTimeLimit:
@@ -52,7 +54,7 @@ class Optimizer:
 
         dataDir = self.Config.TrainDir
         dataList = os.listdir(dataDir)
-        inputN = net.Model.input_shape[1] * 2 + 1
+        inputN = net.Model.output_shape[0][1]
 
         isFirst = False
 
@@ -136,16 +138,13 @@ class Optimizer:
     
     def Optimize(self, net):
         
-        index = [random.randint(0, len(self.Data)-1) for _ in range(self.Config.Worker.TrainBatchSize)]
-        random.shuffle(index)
-
-        batchN = min(len(self.Data), self.Config.Worker.TrainBatchSize)
+        batchN = min(self.DataLength, self.Config.Worker.TrainBatchSize)
 
         inputN = net.Model.output_shape[0][1]
         observeN1 = net.Model.input_shape[1]
         observeN2 = net.Model.input_shape[2]
 
-        if isinstance(self.ObserveList, np.ndarray)==False:
+        if isinstance(self.ObserveList, np.ndarray)==False or self.ObserveList.shape[0]!=batchN:
             self.ObserveList = np.ndarray((batchN, observeN1, observeN2))
             self.PolicyList = np.ndarray((batchN, inputN))
             self.ValueList = np.ndarray(batchN)
@@ -180,20 +179,12 @@ class Optimizer:
 
                 policy = self.Data[p][q][1]
                 observe = self.Data[p][q][0]
-                score = self.Data[p][q][2]
+                value = self.Data[p][q][2]
 
             self.ObserveList[i] = np.array(observe)
             self.PolicyList[i] = np.array(policy)
-            self.ValueList[i] = score
+            self.ValueList[i] = value
 
-
-        sortedValue = list(self.ValueList)
-        sortedValue.append(-1000000000)
-        sortedValue.sort()
-
-        for i in range(len(self.ValueList)):
-            insertPer = (bisect.bisect_left(sortedValue, self.ValueList[i])-1) / (len(self.ValueList)-1)
-            self.ValueList[i] = insertPer
 
         compileParam = self.Config.NetworkCompile(net.OptimizeCount)
         print("Compile "+str(compileParam.LearningRate))
