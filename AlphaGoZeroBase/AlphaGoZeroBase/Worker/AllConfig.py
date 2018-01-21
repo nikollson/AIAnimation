@@ -40,7 +40,7 @@ class TaskFileConfig:
 
         self.ModelValiation = 5000
         self.TrainNum = 5000
-        self.EvalNum = 50
+        self.EvalNum = 100
 
 
 class AllConfig:
@@ -50,8 +50,8 @@ class AllConfig:
 
         valueCalc = ValueCalcConfig(self.Worker.TrainDataMax)
         self.SelfPlayAgent = AgentConfig(valueCalc, 300, 1, 0.5, 0.5, 0.03)
-        self.EvaluateAgent = AgentConfig(valueCalc, 50, 1, 0, 0, 0.01)
-        self.ViewerAgent = AgentConfig(valueCalc, 50, 1, 0, 0, 0.01)
+        self.EvaluateAgent = AgentConfig(valueCalc, 20, 1, 0, 0, 0.01)
+        self.ViewerAgent = AgentConfig(valueCalc, 20, 1, 0, 0, 0.01)
 
         self.Build = BuildConfig(100)
         self.FilePath = NetworkConfig()
