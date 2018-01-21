@@ -16,17 +16,18 @@ from keras.optimizers import SGD
 
 class BuildConfig:
 
-    def __init__(self):
+    def __init__(self, valueSplit):
         self.Regularizer = l2(1e-4)
 
         self.InputCnnFilterSize = 1
-        self.InputCnnFilterNum = 512
+        self.InputCnnFilterNum = 1024
         
         self.MiddleCnnFillterSize = 3
-        self.MiddleCnnLayerNum = 3
+        self.MiddleCnnLayerNum = 4
         self.MiddleCnnFilterNum = 256
 
-        self.ValueNodeNum = 256
+        self.ValueNodeNum = 512
+        self.ValueSplit = valueSplit
 
 class CompileConfig:
 
@@ -125,14 +126,16 @@ class NetworkModel:
 
 
         # Value Output Layer
-        
+
+
         x = Conv1D(filters=1, kernel_size=1, kernel_regularizer=config.Regularizer)(res_out)
         x = BatchNormalization(axis=1)(x)
         x = Activation("relu")(x)
         x = Flatten()(x)
         x = Dense(config.ValueNodeNum, kernel_regularizer=config.Regularizer, activation="relu")(x)
 
-        value_out = Dense(1, kernel_regularizer=config.Regularizer, activation="tanh", name="value_out")(x)
+        
+        value_out = Dense(config.ValueSplit, kernel_regularizer=config.Regularizer, activation="tanh", name="value_out")(x)
 
 
         #Build Model

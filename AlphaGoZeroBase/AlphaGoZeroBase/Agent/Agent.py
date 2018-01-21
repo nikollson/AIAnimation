@@ -10,7 +10,7 @@ import bisect
 
 class AgentConfig:
 
-    def __init__(self, valueCalc, searchAmount, beamWidth, tau, endTau):
+    def __init__(self, valueCalc, searchAmount, beamWidth, tau, endTau, epsilon):
 
         self.ValueCalc = valueCalc
         self.SearchAmount = searchAmount
@@ -18,7 +18,7 @@ class AgentConfig:
         self.SearchDepthMax = 1000
         self.CPuct = 5
         self.DiriclhetAlpha = 0.025
-        self.DiriclhetEpsilon = 0.01
+        self.DiriclhetEpsilon = epsilon
         self.PolicyTau = tau
         self.PolicyEndTau = endTau
         self.PolicyTauMaxTime = 0.3
@@ -98,7 +98,8 @@ class Node:
         policy_arr, value_arr = network.Model.predict(np.array([self.Observation]))
 
         policy = policy_arr[0]
-        value = value_arr[0][0]
+        
+        value = np.sum(value_arr[0])/len(value_arr[0])
 
         if self.IsTerminate == True:
             value = valueCalc.CalcValue(self.Score)
@@ -122,7 +123,7 @@ class Node:
         nList = []
         aList = []
         for i in range(len(self.Children)):
-            nn = self.Children[i].N
+            nn = self.Children[i].N * 100000 + self.Children[i].Q
             if self.PickedList[i]==True:
                 nn=0
             nList.append(nn)
@@ -280,8 +281,7 @@ class Agent:
 
             win = True if i < resultCount/2 else False
 
-            value = self.ValueCalclater.CalcValue(resultNodes[i].Score)
-            trainData = self.MakeTrainData(resultNodes[i], value)
+            trainData = self.MakeTrainData(resultNodes[i], resultNodes[i].Score)
 
             self.TrainData.extend(trainData)
 

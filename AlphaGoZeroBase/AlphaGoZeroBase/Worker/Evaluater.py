@@ -5,6 +5,7 @@ from Environment.MujocoEnv import MujocoEnv
 from Environment.MujocoModelHumanoid import MujocoModelHumanoid
 from Environment.MujocoTask import MujocoTask
 from Agent.Agent import Agent
+from Worker.Logger import Logger
 import os
 import random
 import json
@@ -17,6 +18,7 @@ class Evaluater:
     def __init__(self, config:AllConfig):
 
         self.Config = config
+        self.Logger = Logger("Evaluater")
 
 
     def Start(self):
@@ -47,16 +49,24 @@ class Evaluater:
         dataList = os.listdir(self.Config.Task.EvalDir)
         
         nextWin = 0
+        bestSum = 0
+        nextSum = 0
         
         print("Buttle Start")
 
         for i in range(len(dataList)):
             dataName = dataList[i]
 
-            win = self.IsNextWin(best, next, self.Config.Task.EvalDir+"/"+dataName)
+            bestScore, nextScore = self.CalcScores(best, next, self.Config.Task.EvalDir+"/"+dataName)
+            
+            bestSum += bestScore
+            nextSum += nextScore
+
+            win = bestScore - 0.001 <= nextScore
             nextWin += 1 if win else 0
 
-            print("Buttle "+str(i)+" "+str(win))
+
+            print("Buttle "+str(i)+" "+str(win)+"  "+str(nextWin)+"/"+str(i+1))
             print()
 
         
@@ -76,7 +86,8 @@ class Evaluater:
                     break
                 except:
                     time.sleep(0.1)
-
+            
+            ''' Trainの削除はしない
             while True:
                 try:
                     trainDataList = os.listdir(self.Config.TrainDir)
@@ -85,16 +96,19 @@ class Evaluater:
                     break
                 except:
                     time.sleep(0.1)
+            '''
 
             bestLog = self.Config.GetBestLog()
             best.Save(bestLog.Config, bestLog.Weight)
+
+        self.Logger.AddLog("ButtleEnd "+str(winRate)+" "+str(bestScore)+" "+str(nextScore)+" "+str(next.TimeLimit))
 
         shutil.copyfile(self.Config.FilePath.BestModel.Config, self.Config.FilePath.NextGeneration.Config)
         shutil.copyfile(self.Config.FilePath.BestModel.Weight, self.Config.FilePath.NextGeneration.Weight)
 
 
 
-    def IsNextWin(self, best, next, filePath):
+    def CalcScores(self, best, next, filePath):
 
         bestModel = MujocoModelHumanoid()
         bestTask = MujocoTask(bestModel, filePath)
@@ -116,7 +130,7 @@ class Evaluater:
 
         nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
 
-        return nextScore > bestScore
+        return bestScore, nextScore
 
 
 

@@ -4,7 +4,8 @@ from Worker.AllConfig import AllConfig
 from Environment.MujocoEnv import MujocoEnv
 from Environment.MujocoModelHumanoid import MujocoModelHumanoid
 from Environment.MujocoTask import MujocoTask
-from Agent.Agent import Agent
+from Agent.Agent import Agent, ValueCaluculator, ValueCalcConfig
+from Worker.Logger import Logger
 import os
 import random
 import json
@@ -28,6 +29,7 @@ class Optimizer:
         self.TrainCount = 0
 
         self.PrevNetTimeLimit = -1
+        self.Logger = Logger("Optimizer")
 
 
     def Start(self):
@@ -141,13 +143,15 @@ class Optimizer:
         batchN = min(self.DataLength, self.Config.Worker.TrainBatchSize)
 
         inputN = net.Model.output_shape[0][1]
+        valueN = net.Model.output_shape[1][1]
         observeN1 = net.Model.input_shape[1]
         observeN2 = net.Model.input_shape[2]
 
         if isinstance(self.ObserveList, np.ndarray)==False or self.ObserveList.shape[0]!=batchN:
             self.ObserveList = np.ndarray((batchN, observeN1, observeN2))
             self.PolicyList = np.ndarray((batchN, inputN))
-            self.ValueList = np.ndarray(batchN)
+            self.ValueList = np.ndarray((batchN, valueN))
+            self.ScoreList = np.ndarray(batchN)
 
         enablePolicy = []
         for i in range(len(self.Data)):
@@ -179,12 +183,19 @@ class Optimizer:
 
                 policy = self.Data[p][q][1]
                 observe = self.Data[p][q][0]
-                value = self.Data[p][q][2]
+                score = self.Data[p][q][2]
 
             self.ObserveList[i] = np.array(observe)
             self.PolicyList[i] = np.array(policy)
-            self.ValueList[i] = value
+            self.ScoreList[i] = score
+        
+        valueCalc = ValueCaluculator(ValueCalcConfig(1000000))
 
+        for i in range(self.ScoreList.shape[0]):
+            per = valueCalc.CalcValue(self.ScoreList[i])
+
+            for j in range(valueN):
+                self.ValueList[i][j] = -1 if per < j/valueN else 1
 
         compileParam = self.Config.NetworkCompile(net.OptimizeCount)
         print("Compile "+str(compileParam.LearningRate))
@@ -199,6 +210,8 @@ class Optimizer:
         net.Save(self.Config.FilePath.NextGeneration.Config, self.Config.FilePath.NextGeneration.Weight)
 
         print("Optimize Count : "+str(net.OptimizeCount))
+
+        self.Logger.AddLog("Optimize "+str(net.OptimizeCount))
 
 
     def GetScore(self, env, state, action):

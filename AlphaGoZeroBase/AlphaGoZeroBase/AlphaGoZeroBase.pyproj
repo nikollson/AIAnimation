@@ -67,6 +67,9 @@
     <Compile Include="Worker\Initializer.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Worker\Logger.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Worker\Optimizer.py">
       <SubType>Code</SubType>
     </Compile>

@@ -21,15 +21,16 @@ class WorkerConfig:
         
         self.InitialTimeLimit = 0.6
 
-        self.TrainDataMax = 200
+        self.TrainDataMax = 10000
         self.TrainDataRecentlyPar = 0.2
-        self.TrainBatchSize = 10000
+        self.TrainBatchSize = 20000
         self.TrainBatchRecentlyPar = 0.3
-        self.TrainLoop = 3
+        self.TrainLoop = 1
         
         self.CheckPointLength = 100
-        self.EvaluateWinRate = 0.499999
+        self.EvaluateWinRate = 0.501
         self.EvaluateTimeStepExpand = 1.05
+        
 
 
 class TaskFileConfig:
@@ -37,27 +38,28 @@ class TaskFileConfig:
         self.TrainDir = "TaskTrain"
         self.EvalDir = "TaskEval"
 
-        self.ModelValiation = 2000
-        self.TrainNum = 200
-        self.EvalNum = 30
+        self.ModelValiation = 5000
+        self.TrainNum = 5000
+        self.EvalNum = 50
 
 
 class AllConfig:
     def __init__(self):
         
-        valueCalc = ValueCalcConfig(1000)
-        self.SelfPlayAgent = AgentConfig(valueCalc, 300, 1, 0.5, 0.3)
-        self.EvaluateAgent = AgentConfig(valueCalc, 200, 1, 0, 0)
-        self.ViewerAgent = AgentConfig(valueCalc, 200, 1, 0, 0)
+        self.Worker = WorkerConfig()
 
-        self.Build = BuildConfig()
+        valueCalc = ValueCalcConfig(self.Worker.TrainDataMax)
+        self.SelfPlayAgent = AgentConfig(valueCalc, 300, 1, 0.5, 0.5, 0.03)
+        self.EvaluateAgent = AgentConfig(valueCalc, 50, 1, 0, 0, 0.01)
+        self.ViewerAgent = AgentConfig(valueCalc, 50, 1, 0, 0, 0.01)
+
+        self.Build = BuildConfig(100)
         self.FilePath = NetworkConfig()
         self.Task = TaskFileConfig()
 
         self.TrainDir = "Train"
         self.BestLogDir = "BestLog"
 
-        self.Worker = WorkerConfig()
     
 
     def NetworkCompile(self, optimizeStep):

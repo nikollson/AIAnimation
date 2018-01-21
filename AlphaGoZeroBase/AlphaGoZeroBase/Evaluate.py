@@ -13,7 +13,7 @@ import time
 allConfig = AllConfig()
 
 
-for _ in range(100000):
+for _ in range(100):
     evaluater = Evaluater(allConfig)
     ret = evaluater.Start()
 
