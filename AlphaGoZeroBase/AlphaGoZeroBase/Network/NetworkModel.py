@@ -65,13 +65,18 @@ class NetworkModel:
         if os.access(configPath, os.F_OK):
             while os.access(configPath,os.W_OK)==False or os.access(weightPath,os.W_OK)==False:
                 time.sleep(0.001)
-
-        with open(configPath, "rt") as f:
-            config = json.load(f)
-            self.OptimizeCount = config["OptimizeCount"]
-            self.TimeLimit = config["TimeLimit"]
-            self.Model = Model.from_config(config)
-            self.Model.load_weights(weightPath)
+        
+        while True:
+            try:
+                with open(configPath, "rt") as f:
+                    config = json.load(f)
+                    self.OptimizeCount = config["OptimizeCount"]
+                    self.TimeLimit = config["TimeLimit"]
+                    self.Model = Model.from_config(config)
+                    self.Model.load_weights(weightPath)
+                break
+            except:
+                time.sleep(0.1)
 
 
     def Build(self, config:BuildConfig, observationShape, actionN, timeLimit):

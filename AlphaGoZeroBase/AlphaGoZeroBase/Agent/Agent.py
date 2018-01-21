@@ -16,9 +16,9 @@ class AgentConfig:
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 1000
-        self.CPuct = 4
+        self.CPuct = 5
         self.DiriclhetAlpha = 0.025
-        self.DiriclhetEpsilon = 0.03
+        self.DiriclhetEpsilon = 0.01
         self.PolicyTau = tau
         self.PolicyEndTau = endTau
         self.PolicyTauMaxTime = 0.3
@@ -97,7 +97,7 @@ class Node:
 
         policy_arr, value_arr = network.Model.predict(np.array([self.Observation]))
 
-        policy = policy_arr[0] / np.sum(policy_arr[0])
+        policy = policy_arr[0]
         value = value_arr[0][0]
 
         if self.IsTerminate == True:
