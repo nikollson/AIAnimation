@@ -15,9 +15,9 @@ class AgentConfig:
         self.ValueCalc = valueCalc
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
-        self.SearchDepthMax = 1000
+        self.SearchDepthMax = 10000
         self.CPuct = 5
-        self.DiriclhetAlpha = 0.025
+        self.DiriclhetAlpha = 0.03
         self.DiriclhetEpsilon = epsilon
         self.PolicyTau = tau
         self.PolicyEndTau = endTau
@@ -151,8 +151,14 @@ class Node:
 
         if self.PickedPolicy==None:
             addList = []
+            sum = 0
             for i in range(len(self.Children)):
-                addList.append(1 if i==action else 0)
+                cn = self.Children[i].N
+                sum += cn
+                addList.append(cn)
+            for i in range(len(addList)):
+                addList[i]/=sum
+
             self.PickedPolicy = addList
         
         self.N -= self.Children[action].N;
@@ -258,7 +264,7 @@ class Agent:
             self.StepTarget.append([])
 
             while True:
-                value = self.SearchMoves(searchRoot, 100000)
+                value = self.SearchMoves(searchRoot, 6)
                 
                 if value == None:
                     break
@@ -287,6 +293,7 @@ class Agent:
 
             if i==0:
                 bestAction = self.GetActionList(resultNodes[i])
+                value = self.ValueCalclater.CalcValue(resultNodes[i].Score)
                 self.ValueCalclater.AppendScore(resultNodes[i].Score)
                 print("result "+str(i)+" Score="+str(resultNodes[i].Score)+"  Value="+str(value))
 

@@ -30,26 +30,37 @@ class Optimizer:
 
         self.PrevNetTimeLimit = -1
         self.Logger = Logger("Optimizer")
+        self.Net = None
+        self.CompileParam = None
 
 
     def Start(self):
         
         print("Optimize Start")
 
-        net = self.LoadNet()
+        if self.Net == None or self.CompileParam != self.Config.NetworkCompile(self.Net.OptimizeCount).LearningRate:
+            print("Load and Compile")
+            
+            self.Net = self.LoadNet()
 
-        if self.Data != None and net.TimeLimit != self.PrevNetTimeLimit:
+            config = self.Config.NetworkCompile(self.Net.OptimizeCount)
+            self.CompileParam = config.LearningRate
+
+            self.Net.Compile(config)
+
+
+        if self.Data != None and self.Net.TimeLimit != self.PrevNetTimeLimit:
             return False
 
-        self.PrevNetTimeLimit = net.TimeLimit
+        self.PrevNetTimeLimit = self.Net.TimeLimit
 
-        self.FileLoad(net)
+        self.FileLoad(self.Net)
 
-        if net.OptimizeCount >= self.Config.Worker.CheckPointLength:
-            print("Optimze Count "+str(net.OptimizeCount)+" >= CheckPointLength");
+        if self.Net.OptimizeCount >= self.Config.Worker.CheckPointLength:
+            print("Optimze Count "+str(self.Net.OptimizeCount)+" >= CheckPointLength");
             return True
 
-        self.Optimize(net)
+        self.Optimize(self.Net)
         return True
     
     def FileLoad(self, net:NetworkModel):
@@ -178,8 +189,9 @@ class Optimizer:
             else:
                 q = random.randint(0, len(self.Data[p])-1)
 
-                if random.uniform(0,1) >= self.Config.Worker.TrainBatchRecentlyPar:
-                    q = random.randint(0, int(len(self.Data[p])*self.Config.Worker.TrainDataRecentlyPar))
+                if random.uniform(0,1) <= self.Config.Worker.TrainBatchRecentlyPar:
+                    recentlen = int(len(self.Data[p])*self.Config.Worker.TrainDataRecentlyPar)
+                    q = random.randint(recentlen, len(self.Data[p])-1)
 
                 policy = self.Data[p][q][1]
                 observe = self.Data[p][q][0]
@@ -197,9 +209,9 @@ class Optimizer:
             for j in range(valueN):
                 self.ValueList[i][j] = -1 if per < j/valueN else 1
 
-        compileParam = self.Config.NetworkCompile(net.OptimizeCount)
-        print("Compile "+str(compileParam.LearningRate))
-        net.Compile(compileParam)
+        #compileParam = self.Config.NetworkCompile(net.OptimizeCount)
+        #print("Compile "+str(compileParam.LearningRate))
+        #net.Compile(compileParam)
 
         for i in range(self.Config.Worker.TrainLoop):
             net.OptimizePatch(self.ObserveList, self.PolicyList, self.ValueList)

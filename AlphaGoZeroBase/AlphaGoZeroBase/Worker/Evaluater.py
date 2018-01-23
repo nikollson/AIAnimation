@@ -49,6 +49,7 @@ class Evaluater:
         dataList = os.listdir(self.Config.Task.EvalDir)
         
         nextWin = 0
+        clearCount = 0
         bestSum = 0
         nextSum = 0
         
@@ -59,22 +60,28 @@ class Evaluater:
 
             bestScore, nextScore = self.CalcScores(best, next, self.Config.Task.EvalDir+"/"+dataName)
             
-            bestSum += bestScore
-            nextSum += nextScore
+            bestSum += min(0, bestScore)
+            nextSum += min(0, nextScore)
 
-            win = bestScore - 0.001 <= nextScore
-            nextWin += 1 if win else 0
+            win = 1 if bestScore < nextScore else 0
 
+            if np.abs(bestScore-nextScore)<0.001:
+                win = 0.5
 
-            print("Buttle "+str(i)+" "+str(win)+"  "+str(nextWin)+"/"+str(i+1))
+            nextWin += win
+            clearCount += 1 if nextScore>=0 else 0
+
+            print("Buttle "+str(i)+" "+str(win)+"  "+str(nextWin)+"/"+str(i+1)+"  bestsum="+str(bestSum)+"  nextSum="+str(nextSum))
             print()
 
         
         winRate = nextWin / len(dataList)
+        clearRate = clearCount / len(dataList)
         print("WinRate "+str(winRate))
 
-        if winRate >= self.Config.Worker.EvaluateWinRate:
-
+        #if winRate >= self.Config.Worker.EvaluateWinRate:
+        if bestSum < nextSum:
+            
             print("!! Next Gen Win")
 
             next.OptimizeCount = 0
@@ -101,7 +108,7 @@ class Evaluater:
             bestLog = self.Config.GetBestLog()
             best.Save(bestLog.Config, bestLog.Weight)
 
-        self.Logger.AddLog("ButtleEnd "+str(winRate)+" "+str(bestScore)+" "+str(nextScore)+" "+str(next.TimeLimit))
+        self.Logger.AddLog("ButtleEnd "+str(winRate)+" "+str(clearRate)+" "+str(bestSum)+" "+str(nextSum)+" "+str(next.TimeLimit))
 
         shutil.copyfile(self.Config.FilePath.BestModel.Config, self.Config.FilePath.NextGeneration.Config)
         shutil.copyfile(self.Config.FilePath.BestModel.Weight, self.Config.FilePath.NextGeneration.Weight)
@@ -128,7 +135,7 @@ class Evaluater:
         bestScore = self.GetScore(bestEnv, bestTask, bestAction)
         nextScore = self.GetScore(nextEnv, nextTask, nextAction)
 
-        nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
+        #nextAgent.SaveTrainData(self.Config.GetTrainPath("next"))
 
         return bestScore, nextScore
 

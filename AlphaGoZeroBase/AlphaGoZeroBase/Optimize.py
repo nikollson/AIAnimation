@@ -3,6 +3,7 @@ from Worker.SelfPlay import SelfPlay
 from Worker.Optimizer import Optimizer
 from Worker.Viewer import Viewer
 from Worker.Initializer import Initializer
+from Worker.Evaluater import Evaluater
 from Worker.AllConfig import AllConfig
 import json
 import os
@@ -18,7 +19,7 @@ if config["OptimizeCount"] <allConfig.Worker.CheckPointLength:
     initializer = Initializer(allConfig)
     optimizer = Optimizer(allConfig)
 
-    for _ in range(20):
+    for _ in range(50):
         ret = optimizer.Start()
 
         if ret==False:

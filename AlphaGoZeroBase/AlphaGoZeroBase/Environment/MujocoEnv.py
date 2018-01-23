@@ -37,7 +37,8 @@ class MujocoEnv:
 
         for i in range(len(torque)):
             self.Sim.data.ctrl[i] = torque[i]
-
+            
+        self.Sim.step()
         self.Sim.step()
         self.Sim.step()
 
@@ -64,13 +65,13 @@ class MujocoEnv:
             observe.extend(self.GetSensorValue(1, joints[i].JointPosition))
             observe.extend(self.GetSensorValue(1, joints[i].JointVelocity))
             observe.extend(self.GetSensorValue(3, joints[i].Accel))
-            #observe.extend(self.GetSensorValue(3, joints[i].Gyro))
-            #observe.extend(self.GetSensorValue(3, joints[i].Torque))
-            #observe.extend(self.GetSensorValue(3, joints[i].Velocity))
+            observe.extend(self.GetSensorValue(3, joints[i].Gyro))
+            observe.extend(self.GetSensorValue(3, joints[i].Torque))
+            observe.extend(self.GetSensorValue(3, joints[i].Velocity))
 
-            #observe.extend(self.MatToAngle(self.Sim.data.get_site_xmat(joints[i].Site)))
+            observe.extend(self.MatToAngle(self.Sim.data.get_site_xmat(joints[i].Site)))
 
-            #observe.extend(task.GetJointObservation(self.Sim, joints[i]))
+            observe.extend(task.GetJointObservation(self.Sim, joints[i]))
             
             if i==0:
                 ret = np.zeros((N, len(observe)))
