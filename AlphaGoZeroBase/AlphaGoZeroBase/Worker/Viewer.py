@@ -17,14 +17,20 @@ class Viewer:
 
     def Start(self):
         
-        
         filePath = self.Config.FilePath.BestModel
+        
+        cnf = "BestLog/BestLog180126082522.cnf"
+        wgt = "BestLog/BestLog180126082522.wgt"
+        timeLimit = 0.9
 
         net = Network()
-        net.Load(filePath.Config, filePath.Weight)
-        
+        net.Load(cnf, wgt)
+        net.TimeLimit = timeLimit
+
         model = Model()
-        task = MujocoTask.LoadRandom(model, self.Config.Task.EvalDir)
+        taskName = "TaskEval/EvalTask114.task"
+        task = MujocoTask(model, taskName)
+        #task = MujocoTask.LoadRandom(model, self.Config.Task.EvalDir)
         env = MujocoEnv(model)
 
         agentConfig = self.Config.ViewerAgent
@@ -44,4 +50,3 @@ class Viewer:
                 
                 #print(env.GetObservation(task))
                 env.Render()
-

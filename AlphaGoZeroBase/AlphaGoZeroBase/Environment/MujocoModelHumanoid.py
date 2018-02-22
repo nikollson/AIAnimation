@@ -73,11 +73,11 @@ class MujocoModelHumanoid(MujocoModel):
         for j in range(modelNum):
 
             if j!=0:
-                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("rootx")] = random.uniform(-1.5, 1.5)
+                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("rootx")] = random.uniform(-0.8, 0.8)
                 state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("rootz")] = random.uniform(2, 2)
-                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("thigh_joint")] = pt =random.uniform(-0.1, -0.8)
-                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("leg_joint")] = pl = random.uniform(-0.1, -0.8)
-                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("rooty")] = random.uniform(-0.4, 0.4) + (pt + pl)/2
+                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("thigh_joint")] = pt =random.uniform(-0.1, -0.5)
+                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("leg_joint")] = pl = random.uniform(-0.1, -0.5)
+                state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("rooty")] = random.uniform(-0.2, 0.2) + (pt + pl)/2
                 state.qpos[env.Model.MujocoModel.get_joint_qpos_addr("foot_joint")] = random.uniform(-0.5, 0.5)
             
             env.SetSimState(state)

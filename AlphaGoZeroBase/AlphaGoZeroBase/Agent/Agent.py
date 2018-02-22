@@ -16,7 +16,7 @@ class AgentConfig:
         self.SearchAmount = searchAmount
         self.BeamWidth = beamWidth
         self.SearchDepthMax = 10000
-        self.CPuct = 5
+        self.CPuct = 2.5
         self.DiriclhetAlpha = 0.03
         self.DiriclhetEpsilon = epsilon
         self.PolicyTau = tau
@@ -91,7 +91,7 @@ class Node:
         env.Step(self.ActionNum)
 
         self.State = env.GetSimState()
-        self.Observation = env.GetObservation(task)
+        self.Observation = env.GetObservation(task, network.TimeLimit)
         self.Score = env.GetScore(task)
         self.IsTerminate = env.IsTerminate(task, self.Score, network.TimeLimit)
 
@@ -151,6 +151,9 @@ class Node:
 
         if self.PickedPolicy==None:
             addList = []
+            for i in range(len(self.Children)):
+                addList.append(1 if i==action else 0)
+            '''
             sum = 0
             for i in range(len(self.Children)):
                 cn = self.Children[i].N
@@ -158,7 +161,7 @@ class Node:
                 addList.append(cn)
             for i in range(len(addList)):
                 addList[i]/=sum
-
+            '''
             self.PickedPolicy = addList
         
         self.N -= self.Children[action].N;

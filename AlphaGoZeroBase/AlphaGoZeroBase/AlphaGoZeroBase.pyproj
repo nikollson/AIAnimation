@@ -23,6 +23,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AlphaGoZeroBase.py" />
+    <Compile Include="Check.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Environment\MujocoEnv.py">
       <SubType>Code</SubType>
     </Compile>

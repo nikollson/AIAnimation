@@ -51,7 +51,7 @@ class MujocoEnv:
         self.Viewer.render()
 
 
-    def GetObservation(self, task:MujocoTask):
+    def GetObservation(self, task:MujocoTask, timeLimit):
         
         joints = self.Model.JointList
 
@@ -72,6 +72,8 @@ class MujocoEnv:
             observe.extend(self.MatToAngle(self.Sim.data.get_site_xmat(joints[i].Site)))
 
             observe.extend(task.GetJointObservation(self.Sim, joints[i]))
+
+            observe.append(timeLimit- self.Sim.data.time)
             
             if i==0:
                 ret = np.zeros((N, len(observe)))
@@ -101,7 +103,7 @@ class MujocoEnv:
     
     def GetObservationShape(self, task):
 
-        return self.GetObservation(task).shape
+        return self.GetObservation(task, 1).shape
     
 
     def GetActionNum(self):

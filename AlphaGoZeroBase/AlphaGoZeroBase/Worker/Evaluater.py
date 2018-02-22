@@ -80,7 +80,7 @@ class Evaluater:
         print("WinRate "+str(winRate))
 
         #if winRate >= self.Config.Worker.EvaluateWinRate:
-        if bestSum < nextSum:
+        if bestSum * self.Config.Worker.EvaluateWinRate < nextSum:
             
             print("!! Next Gen Win")
 

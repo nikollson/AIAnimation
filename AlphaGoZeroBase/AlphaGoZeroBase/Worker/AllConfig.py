@@ -19,16 +19,16 @@ class NetworkConfig:
 class WorkerConfig:
     def __init__(self):
         
-        self.InitialTimeLimit = 0.6
+        self.InitialTimeLimit = 0.4
 
         self.TrainDataMax = 1500
         self.TrainDataRecentlyPar = 0.2
         self.TrainBatchSize = 20000
-        self.TrainBatchRecentlyPar = 0.5
+        self.TrainBatchRecentlyPar = 0.0
         self.TrainLoop = 1
         
-        self.CheckPointLength = 60
-        self.EvaluateWinRate = 0.501
+        self.CheckPointLength = 50
+        self.EvaluateWinRate = 1
         self.EvaluateTimeStepExpand = 1.05
         
 
@@ -39,7 +39,7 @@ class TaskFileConfig:
         self.EvalDir = "TaskEval"
 
         self.ModelValiation = 5000
-        self.TrainNum = 1000
+        self.TrainNum = 2000
         self.EvalNum = 200
 
 
@@ -49,9 +49,10 @@ class AllConfig:
         self.Worker = WorkerConfig()
 
         valueCalc = ValueCalcConfig(self.Worker.TrainDataMax)
-        self.SelfPlayAgent = AgentConfig(valueCalc, 100, 1, 0, 0, 0.25)
-        self.EvaluateAgent = AgentConfig(valueCalc, 1, 1, 0, 0, 0)
-        self.ViewerAgent = AgentConfig(valueCalc, 1, 1, 0, 0, 0)
+        self.SelfPlayAgent = AgentConfig(valueCalc, 150, 1, 0, 0, 0.2)
+        self.EvaluateAgent = AgentConfig(valueCalc, 4, 1, 0, 0, 0)
+        self.ViewerAgent = AgentConfig(valueCalc, 30, 1, 0, 0, 0)
+        self.CheckerAgent = AgentConfig(valueCalc, 10, 1, 0, 0, 0.2)
 
         self.Build = BuildConfig(100)
         self.FilePath = NetworkConfig()
@@ -66,9 +67,9 @@ class AllConfig:
 
         per = optimizeStep/self.Worker.CheckPointLength
 
-        if per < 0.4:
-            return CompileConfig(1e-2)
-        if per < 0.6:
+        if per < 0.5:
+            return CompileConfig(2e-2)
+        if per < 0.7:
             return CompileConfig(5e-3)
     
         return CompileConfig(1e-3)

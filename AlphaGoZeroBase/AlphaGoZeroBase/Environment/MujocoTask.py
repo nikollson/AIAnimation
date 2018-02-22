@@ -10,7 +10,7 @@ import bisect
 
 class TaskConfig:
     def __init__(self, fileName):
-        self.ClearScore = -0.1
+        self.ClearScore = -0.05
         self.ClearBonusScore = 10000
 
         self.angleScale = 1/math.pi
